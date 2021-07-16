@@ -2,7 +2,7 @@ package demo
 
 import (
 	"fmt"
-	"github.com/shibukawa/nanogui.go"
+	"github.com/donomii/nanogui-go"
 	"github.com/shibukawa/nanovgo"
 	"github.com/donomii/goof"
 	"math"
@@ -165,7 +165,7 @@ func ViewWin(screen *nanogui.Screen) {
 		textBox.SetFontSize(16)
 		
 		txt := goof.Shell("dir")
-		textBox1 := nanogui.NewTextBox(window, txt)
+		textBox1 := nanogui.NewTextArea(window, txt)
 	textBox1.SetFont("japanese")
 		textBox1.SetEditable(true)
 		textBox1.SetFixedSize(500, 500)

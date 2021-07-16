@@ -5,8 +5,8 @@ package main
 import (
 	"fmt"
 	"github.com/shibukawa/glfw"
-	"github.com/shibukawa/nanogui.go"
-	"github.com/shibukawa/nanogui.go/sample1/demo"
+	"github.com/donomii/nanogui-go"
+	"github.com/donomii/nanogui-go/sample1/demo"
 	"github.com/shibukawa/nanovgo"
 	"io/ioutil"
 	"math"
@@ -48,6 +48,8 @@ func (a *Application) init() {
 	buffer object management.
 	*/
 }
+
+var app Application
 
 func main() {
 	nanogui.Init()
