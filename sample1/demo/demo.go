@@ -1,13 +1,16 @@
 package demo
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/donomii/nanogui-go"
-	"github.com/shibukawa/nanovgo"
-	"github.com/donomii/goof"
+	"io/ioutil"
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/donomii/goof"
+	"github.com/donomii/nanogui-go"
+	"github.com/shibukawa/nanovgo"
 )
 
 func ButtonDemo(screen *nanogui.Screen) {
@@ -154,44 +157,77 @@ func BasicWidgetsDemo(screen *nanogui.Screen, images []nanogui.Image) (*nanogui.
 }
 
 func ViewWin(screen *nanogui.Screen) {
-	window := nanogui.NewWindow(screen, "Control Panel")
+	window := nanogui.NewWindow(screen, "Command Window")
 	window.SetPosition(545, 15)
 	window.SetLayout(nanogui.NewGroupLayout())
 	nanogui.NewLabel(window, "Regular text :").SetFont("sans-bold")
 	textBox := nanogui.NewTextBox(window, "dir")
 	textBox.SetFont("japanese")
-		textBox.SetEditable(true)
-		textBox.SetFixedSize(500, 20)
-		textBox.SetDefaultValue("0.0")
-		textBox.SetFontSize(16)
-		
-		txt := goof.Shell("dir")
-		textBox1 := nanogui.NewTextArea(window, txt)
+	textBox.SetEditable(true)
+	textBox.SetFixedSize(500, 20)
+	textBox.SetDefaultValue("0.0")
+	textBox.SetFontSize(16)
+
+	txt := goof.Shell("dir")
+	textBox1 := nanogui.NewTextArea(window, txt)
 	textBox1.SetFont("japanese")
-		textBox1.SetEditable(true)
-		textBox1.SetFixedSize(500, 500)
-		textBox1.SetDefaultValue("0.0")
-		textBox1.SetFontSize(16)
-		
-		go func () {
+	textBox1.SetEditable(true)
+	textBox1.SetFixedSize(500, 500)
+	textBox1.SetDefaultValue("0.0")
+	textBox1.SetFontSize(16)
+
+	go func() {
 		for {
-			time.Sleep(1*time.Second)
+			time.Sleep(1 * time.Second)
 			data := goof.Shell(textBox.Value())
 			textBox1.SetValue(data)
 		}
-		}()
-	
+	}()
+
 }
 
-
-
-func GenericWindow(screen *nanogui.Screen) {
+func ControlPanel(screen *nanogui.Screen) {
 	window := nanogui.NewWindow(screen, "Control Panel")
 	window.SetPosition(545, 15)
 	window.SetLayout(nanogui.NewGroupLayout())
 	b4 := nanogui.NewButton(window, "New Window")
 	b4.SetCallback(func() {
 		ViewWin(screen)
+		screen.PerformLayout()
+	})
+
+	b5 := nanogui.NewButton(window, "Save")
+	b5.SetCallback(func() {
+		out, _ := json.Marshal(WindowList)
+		ioutil.WriteFile("windlow.json", out, 0777)
+	})
+
+	nanogui.NewLabel(window, "Color wheel").SetFont("sans-bold")
+	nanogui.NewColorWheel(window)
+
+	nanogui.NewLabel(window, "Color picker").SetFont("sans-bold")
+	nanogui.NewColorPicker(window)
+
+	nanogui.NewLabel(window, "Function graph").SetFont("sans-bold")
+	graph := nanogui.NewGraph(window, "Some function")
+	graph.SetHeader("E = 2.35e-3")
+	graph.SetFooter("Iteration 89")
+	fValues := make([]float32, 100)
+	for i := 0; i < 100; i++ {
+		x := float64(i)
+		fValues[i] = 0.5 * float32(0.5*math.Sin(x/10.0)+0.5*math.Cos(x/23.0)+1.0)
+	}
+	graph.SetValues(fValues)
+
+}
+
+func MiscWidgetsDemo(screen *nanogui.Screen) {
+	window := nanogui.NewWindow(screen, "Misc. widgets")
+	window.SetPosition(445, 15)
+	window.SetLayout(nanogui.NewGroupLayout())
+	b4 := nanogui.NewButton(window, "New Window")
+	b4.SetCallback(func() {
+		GenericWindow(screen)
 		screen.PerformLayout()
 	})
 
@@ -211,39 +247,6 @@ func GenericWindow(screen *nanogui.Screen) {
 		fValues[i] = 0.5 * float32(0.5*math.Sin(x/10.0)+0.5*math.Cos(x/23.0)+1.0)
 	}
 	graph.SetValues(fValues)
-	
-
-}
-
-
-
-func MiscWidgetsDemo(screen *nanogui.Screen) {
-	window := nanogui.NewWindow(screen, "Misc. widgets")
-	window.SetPosition(445, 15)
-	window.SetLayout(nanogui.NewGroupLayout())
-	b4 := nanogui.NewButton(window, "New Window")
-	b4.SetCallback(func() {
-	GenericWindow(screen)
-	screen.PerformLayout()
-	})
-
-	nanogui.NewLabel(window, "Color wheel").SetFont("sans-bold")
-	nanogui.NewColorWheel(window)
-
-	nanogui.NewLabel(window, "Color picker").SetFont("sans-bold")
-	nanogui.NewColorPicker(window)
-
-	nanogui.NewLabel(window, "Function graph").SetFont("sans-bold")
-	graph := nanogui.NewGraph(window, "Some function")
-	graph.SetHeader("E = 2.35e-3")
-	graph.SetFooter("Iteration 89")
-	fValues := make([]float32, 100)
-	for i := 0; i < 100; i++ {
-		x := float64(i)
-		fValues[i] = 0.5 * float32(0.5*math.Sin(x/10.0)+0.5*math.Cos(x/23.0)+1.0)
-	}
-	graph.SetValues(fValues)
-	
 
 }
 

@@ -2,6 +2,7 @@ package nanogui
 
 import (
 	"fmt"
+
 	"github.com/shibukawa/glfw"
 	"github.com/shibukawa/nanovgo"
 )
@@ -16,6 +17,8 @@ type Window struct {
 	depth       int
 }
 
+var WindowList []Window
+
 type IWindow interface {
 	Widget
 	RefreshRelativePlacement()
@@ -23,6 +26,9 @@ type IWindow interface {
 }
 
 func NewWindow(parent Widget, title string) *Window {
+	if WindowList == nil {
+		WindowList = []Window{}
+	}
 	if title == "" {
 		title = "Untitled"
 	}
@@ -31,6 +37,7 @@ func NewWindow(parent Widget, title string) *Window {
 		draggable: true,
 	}
 	InitWidget(window, parent)
+	WindowList = append(WindowList, window)
 	return window
 }
 

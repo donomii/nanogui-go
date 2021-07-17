@@ -32,6 +32,7 @@ func (a *Application) init() {
 	demo.SelectedImageDemo(a.screen, imageButton, imagePanel)
 	demo.MiscWidgetsDemo(a.screen)
 	demo.GridDemo(a.screen)
+	demo.ControlPanel(a.screen)
 
 	a.screen.SetDrawContentsCallback(func() {
 		a.progress.SetValue(float32(math.Mod(float64(nanogui.GetTime())/10, 1.0)))
