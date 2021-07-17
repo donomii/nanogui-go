@@ -29,8 +29,6 @@ func (a *Application) init() {
 
 	a.screen.NVGContext().CreateFont("japanese", "font/GenShinGothic-P-Regular.ttf")
 
-	demo.MiscWidgetsDemo(a.screen)
-	demo.GridDemo(a.screen)
 	demo.ControlPanel(a.screen)
 
 	a.screen.PerformLayout()

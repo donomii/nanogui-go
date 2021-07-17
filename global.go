@@ -1,10 +1,11 @@
 package nanogui
 
 import (
-	"github.com/goxjs/gl"
-	"github.com/shibukawa/glfw"
 	"sync"
 	"time"
+
+	"github.com/goxjs/gl"
+	"github.com/shibukawa/glfw"
 )
 
 var mainloopActive bool = false
@@ -50,6 +51,9 @@ func MainLoop() {
 				continue
 			}
 			//screen.DebugPrint()
+
+			screen.PerformLayout()
+
 			screen.DrawAll()
 			haveActiveScreen = true
 		}
