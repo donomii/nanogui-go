@@ -54,7 +54,7 @@ var app Application
 func main() {
 	nanogui.Init()
 	//nanogui.SetDebug(true)
-	app := Application{}
+	app = Application{}
 	app.init()
 	app.screen.DrawAll()
 	app.screen.SetVisible(true)

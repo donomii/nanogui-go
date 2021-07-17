@@ -7,6 +7,7 @@ import (
 	"github.com/donomii/goof"
 	"math"
 	"strconv"
+	"time"
 )
 
 func ButtonDemo(screen *nanogui.Screen) {
@@ -157,7 +158,7 @@ func ViewWin(screen *nanogui.Screen) {
 	window.SetPosition(545, 15)
 	window.SetLayout(nanogui.NewGroupLayout())
 	nanogui.NewLabel(window, "Regular text :").SetFont("sans-bold")
-	textBox := nanogui.NewTextBox(window, "日本語")
+	textBox := nanogui.NewTextBox(window, "dir")
 	textBox.SetFont("japanese")
 		textBox.SetEditable(true)
 		textBox.SetFixedSize(500, 20)
@@ -171,6 +172,14 @@ func ViewWin(screen *nanogui.Screen) {
 		textBox1.SetFixedSize(500, 500)
 		textBox1.SetDefaultValue("0.0")
 		textBox1.SetFontSize(16)
+		
+		go func () {
+		for {
+			time.Sleep(1*time.Second)
+			data := goof.Shell(textBox.Value())
+			textBox1.SetValue(data)
+		}
+		}()
 	
 }
 
