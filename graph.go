@@ -96,10 +96,10 @@ func (g *Graph) PreferredSize(self Widget, ctx *nanovgo.Context) (int, int) {
 func (g *Graph) Draw(self Widget, ctx *nanovgo.Context) {
 	g.WidgetImplement.Draw(self, ctx)
 
-	x := float32(g.x)
-	y := float32(g.y)
-	w := float32(g.w)
-	h := float32(g.h)
+	x := float32(g.WidgetPosX)
+	y := float32(g.WidgetPosY)
+	w := float32(g.WidgetWidth)
+	h := float32(g.WidgetHeight)
 
 	ctx.BeginPath()
 	ctx.Rect(x, y, w, h)

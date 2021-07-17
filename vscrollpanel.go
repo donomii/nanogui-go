@@ -37,7 +37,7 @@ func (v *VScrollPanel) OnPerformLayout(self Widget, ctx *nanovgo.Context) {
 	child := v.children[0]
 	_, v.childPreferredHeight = child.PreferredSize(child, ctx)
 	child.SetPosition(0, 0)
-	child.SetSize(v.w, v.childPreferredHeight)
+	child.SetSize(v.WidgetWidth, v.childPreferredHeight)
 }
 
 func (v *VScrollPanel) PreferredSize(self Widget, ctx *nanovgo.Context) (int, int) {
@@ -58,8 +58,8 @@ func (v *VScrollPanel) MouseDragEvent(self Widget, x, y, relX, relY, button int,
 	if len(v.children) == 0 {
 		return false
 	}
-	if v.h < v.childPreferredHeight {
-		h := float32(v.h)
+	if v.WidgetHeight < v.childPreferredHeight {
+		h := float32(v.WidgetHeight)
 		ph := float32(v.childPreferredHeight)
 		if runtime.GOOS != "darwin" {
 			relY = -relY
@@ -74,8 +74,8 @@ func (v *VScrollPanel) MouseDragEvent(self Widget, x, y, relX, relY, button int,
 }
 
 func (v *VScrollPanel) ScrollEvent(self Widget, x, y, relX, relY int) bool {
-	if v.h < v.childPreferredHeight {
-		h := float32(v.h)
+	if v.WidgetHeight < v.childPreferredHeight {
+		h := float32(v.WidgetHeight)
 		ph := float32(v.childPreferredHeight)
 		scrollAmount := float32(relY) * 2
 
@@ -93,7 +93,7 @@ func (v *VScrollPanel) MouseButtonEvent(self Widget, x, y int, button glfw.Mouse
 		return false
 	}
 	child := v.children[0]
-	shift := int(v.scroll * float32(v.childPreferredHeight-v.h))
+	shift := int(v.scroll * float32(v.childPreferredHeight-v.WidgetHeight))
 	return child.MouseButtonEvent(child, x, y+shift, button, down, modifier)
 }
 
@@ -102,7 +102,7 @@ func (v *VScrollPanel) MouseMotionEvent(self Widget, x, y, relX, relY, button in
 		return false
 	}
 	child := v.children[0]
-	shift := int(v.scroll * float32(v.childPreferredHeight-v.h))
+	shift := int(v.scroll * float32(v.childPreferredHeight-v.WidgetHeight))
 	return child.MouseMotionEvent(child, x, y+shift, relX, relY, button, modifier)
 }
 
@@ -110,10 +110,10 @@ func (v *VScrollPanel) Draw(self Widget, ctx *nanovgo.Context) {
 	if len(v.children) == 0 {
 		return
 	}
-	x := float32(v.x)
-	y := float32(v.y)
-	w := float32(v.w)
-	h := float32(v.h)
+	x := float32(v.WidgetPosX)
+	y := float32(v.WidgetPosY)
+	w := float32(v.WidgetWidth)
+	h := float32(v.WidgetHeight)
 
 	child := v.children[0]
 	layout := self.Layout()
@@ -131,7 +131,7 @@ func (v *VScrollPanel) Draw(self Widget, ctx *nanovgo.Context) {
 		child.Draw(child, ctx)
 	}
 	ctx.Restore()
-	if v.childPreferredHeight > v.h {
+	if v.childPreferredHeight > v.WidgetHeight {
 		scrollH := h * minF(1.0, h/float32(v.childPreferredHeight))
 		scrollH = minF(maxF(20.0, scrollH), h)
 		paint := nanovgo.BoxGradient(x+w-12+1, y+4+1, 8, h-8, 3, 4, nanovgo.MONO(0, 32), nanovgo.MONO(0, 92))
@@ -149,8 +149,8 @@ func (v *VScrollPanel) Draw(self Widget, ctx *nanovgo.Context) {
 }
 
 func (v *VScrollPanel) IsClipped(x, y, w, h int) bool {
-	scroll := int(v.scroll * (float32(v.childPreferredHeight) - float32(v.h)))
-	return v.Parent().IsClipped(x+v.x, y-scroll+v.y, w, h)
+	scroll := int(v.scroll * (float32(v.childPreferredHeight) - float32(v.WidgetHeight)))
+	return v.Parent().IsClipped(x+v.WidgetPosX, y-scroll+v.WidgetPosY, w, h)
 }
 
 func (v *VScrollPanel) String() string {
@@ -255,5 +255,5 @@ func (v *VScrollPanelChild) IsClipped(cx, cy, cw, ch int) bool {
 	if parent == nil {
 		return false
 	}
-	return parent.IsClipped(cx+v.x, cy+v.y, cw, ch)
+	return parent.IsClipped(cx+v.WidgetPosX, cy+v.WidgetPosY, cw, ch)
 }

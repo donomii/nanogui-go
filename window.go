@@ -9,15 +9,13 @@ import (
 
 type Window struct {
 	WidgetImplement
-	title       string
+	WindowTitle string
 	buttonPanel Widget
 	modal       bool
 	drag        bool
 	draggable   bool
-	depth       int
+	WindowDepth int
 }
-
-var WindowList []Window
 
 type IWindow interface {
 	Widget
@@ -26,29 +24,26 @@ type IWindow interface {
 }
 
 func NewWindow(parent Widget, title string) *Window {
-	if WindowList == nil {
-		WindowList = []Window{}
-	}
+
 	if title == "" {
 		title = "Untitled"
 	}
 	window := &Window{
-		title:     title,
-		draggable: true,
+		WindowTitle: title,
+		draggable:   true,
 	}
 	InitWidget(window, parent)
-	WindowList = append(WindowList, window)
 	return window
 }
 
 // Title() returns the window title
 func (w *Window) Title() string {
-	return w.title
+	return w.WindowTitle
 }
 
 // SetTitle() sets the window title
 func (w *Window) SetTitle(title string) {
-	w.title = title
+	w.WindowTitle = title
 }
 
 // Modal() returns is this a model dialog?
@@ -111,7 +106,7 @@ func (w *Window) MouseButtonEvent(self Widget, x, y int, button glfw.MouseButton
 		return true
 	}
 	if button == glfw.MouseButton1 && w.draggable {
-		w.drag = down && (y-w.y) < w.theme.WindowHeaderHeight
+		w.drag = down && (y-w.WidgetPosY) < w.theme.WindowHeaderHeight
 		return true
 	}
 	return false
@@ -120,8 +115,8 @@ func (w *Window) MouseButtonEvent(self Widget, x, y int, button glfw.MouseButton
 func (w *Window) MouseDragEvent(self Widget, x, y, relX, relY, button int, modifier glfw.ModifierKey) bool {
 	if w.drag && (button&1<<uint(glfw.MouseButton1)) != 0 {
 		pW, pH := self.Parent().Size()
-		w.x = clampI(w.x+relX, 0, pW-w.w)
-		w.y = clampI(w.y+relY, 0, pH-w.h)
+		w.WidgetPosX = clampI(w.WidgetPosX+relX, 0, pW-w.WidgetWidth)
+		w.WidgetPosY = clampI(w.WidgetPosY+relY, 0, pH-w.WidgetHeight)
 		return true
 	}
 	return false
@@ -142,7 +137,7 @@ func (w *Window) PreferredSize(self Widget, ctx *nanovgo.Context) (int, int) {
 	}
 	ctx.SetFontSize(18.0)
 	ctx.SetFontFace(w.theme.FontBold)
-	_, bounds := ctx.TextBounds(0, 0, w.title)
+	_, bounds := ctx.TextBounds(0, 0, w.WindowTitle)
 
 	return maxI(width, int(bounds[2]-bounds[0])+20), maxI(height, int(bounds[3]-bounds[1]))
 }
@@ -171,10 +166,10 @@ func (w *Window) Draw(self Widget, ctx *nanovgo.Context) {
 	hh := float32(w.theme.WindowHeaderHeight)
 
 	// Draw window
-	wx := float32(w.x)
-	wy := float32(w.y)
-	ww := float32(w.w)
-	wh := float32(w.h)
+	wx := float32(w.WidgetPosX)
+	wy := float32(w.WidgetPosY)
+	ww := float32(w.WidgetWidth)
+	wh := float32(w.WidgetHeight)
 	ctx.Save()
 	ctx.BeginPath()
 	ctx.RoundedRect(wx, wy, ww, wh, cr)
@@ -194,7 +189,7 @@ func (w *Window) Draw(self Widget, ctx *nanovgo.Context) {
 	ctx.SetFillPaint(shadowPaint)
 	ctx.Fill()
 
-	if w.title != "" {
+	if w.WindowTitle != "" {
 		headerPaint := nanovgo.LinearGradient(wx, wy, ww, wh+hh, w.theme.WindowHeaderGradientTop, w.theme.WindowHeaderGradientBot)
 
 		ctx.BeginPath()
@@ -220,14 +215,14 @@ func (w *Window) Draw(self Widget, ctx *nanovgo.Context) {
 		ctx.SetTextAlign(nanovgo.AlignCenter | nanovgo.AlignMiddle)
 		ctx.SetFontBlur(2.0)
 		ctx.SetFillColor(w.theme.DropShadow)
-		ctx.Text(wx+ww*0.5, wy+hh*0.5, w.title)
+		ctx.Text(wx+ww*0.5, wy+hh*0.5, w.WindowTitle)
 		ctx.SetFontBlur(0.0)
 		if w.focused {
 			ctx.SetFillColor(w.theme.WindowTitleFocused)
 		} else {
 			ctx.SetFillColor(w.theme.WindowTitleUnfocused)
 		}
-		ctx.Text(wx+ww*0.5, wy+hh*0.5-1, w.title)
+		ctx.Text(wx+ww*0.5, wy+hh*0.5-1, w.WindowTitle)
 	}
 	ctx.Restore()
 	w.WidgetImplement.Draw(self, ctx)
@@ -238,13 +233,13 @@ func (w *Window) FindWindow() IWindow {
 }
 
 func (w *Window) String() string {
-	return w.StringHelper(fmt.Sprintf("Window(%d)", w.Depth()), w.title)
+	return w.StringHelper(fmt.Sprintf("Window(%d)", w.Depth()), w.WindowTitle)
 }
 
 func (w *Window) SetDepth(d int) {
-	w.depth = d
+	w.WindowDepth = d
 }
 
 func (w *Window) Depth() int {
-	return w.depth
+	return w.WindowDepth
 }

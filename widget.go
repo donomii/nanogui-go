@@ -2,9 +2,10 @@ package nanogui
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/shibukawa/glfw"
 	"github.com/shibukawa/nanovgo"
-	"sort"
 )
 
 // Widget is base class of all widgets
@@ -100,18 +101,18 @@ type Widget interface {
 }
 
 type WidgetImplement struct {
-	parent                     Widget
-	layout                     Layout
-	theme                      *Theme
-	x, y, w, h, fixedW, fixedH int
-	clamp                      [2]bool
-	visible, enabled           bool
-	focused, mouseFocus        bool
-	id                         string
-	tooltip                    string
-	fontSize                   int
-	cursor                     Cursor
-	children                   []Widget
+	parent                                                            Widget
+	layout                                                            Layout
+	theme                                                             *Theme
+	WidgetPosX, WidgetPosY, WidgetWidth, WidgetHeight, fixedW, fixedH int
+	clamp                                                             [2]bool
+	visible, enabled                                                  bool
+	focused, mouseFocus                                               bool
+	WidgetId                                                          string
+	tooltip                                                           string
+	WidgetFontSize                                                    int
+	cursor                                                            Cursor
+	children                                                          []Widget
 }
 
 func NewWidget(parent Widget) Widget {
@@ -152,22 +153,22 @@ func (w *WidgetImplement) SetTheme(theme *Theme) {
 
 // Position() returns the position relative to the parent widget
 func (w *WidgetImplement) Position() (int, int) {
-	return w.x, w.y
+	return w.WidgetPosX, w.WidgetPosY
 }
 
 // SetPosition() set the position relative to the parent widget
 func (w *WidgetImplement) SetPosition(x, y int) {
-	w.x = x
-	w.y = y
+	w.WidgetPosX = x
+	w.WidgetPosY = y
 }
 
 // AbsolutePosition() returns the absolute position on screen
 func (w *WidgetImplement) AbsolutePosition() (int, int) {
 	if w.parent != nil {
 		x, y := w.parent.AbsolutePosition()
-		return x + w.x, y + w.y
+		return x + w.WidgetPosX, y + w.WidgetPosY
 	}
-	return w.x, w.y
+	return w.WidgetPosX, w.WidgetPosY
 }
 
 // AbsolutePosition() returns whether the the object should be skipped by layout engines.
@@ -177,33 +178,33 @@ func (w *WidgetImplement) IsPositionAbsolute() bool {
 
 // Size() returns the size of the widget
 func (w *WidgetImplement) Size() (int, int) {
-	return w.w, w.h
+	return w.WidgetWidth, w.WidgetHeight
 }
 
 // SetSize() set the size of the widget
 func (wg *WidgetImplement) SetSize(w, h int) {
-	wg.w = w
-	wg.h = h
+	wg.WidgetWidth = w
+	wg.WidgetHeight = h
 }
 
 // Width() returns the width of the widget
 func (w *WidgetImplement) Width() int {
-	return w.w
+	return w.WidgetWidth
 }
 
 // SetWidth() set the width of the widget
 func (wg *WidgetImplement) SetWidth(w int) {
-	wg.w = w
+	wg.WidgetWidth = w
 }
 
 // Height() returns the height of the widget
 func (w *WidgetImplement) Height() int {
-	return w.h
+	return w.WidgetHeight
 }
 
 // SetHeight() set the height of the widget
 func (w *WidgetImplement) SetHeight(h int) {
-	w.h = h
+	w.WidgetHeight = h
 }
 
 // Return the fixed size (see SetFixedSize())
@@ -334,12 +335,12 @@ func (w *WidgetImplement) FindWindow() IWindow {
 
 // SetID() associates this widget with an ID value (optional)
 func (w *WidgetImplement) SetID(id string) {
-	w.id = id
+	w.WidgetId = id
 }
 
 // ID() returns the ID value associated with this widget, if any
 func (w *WidgetImplement) ID() string {
-	return w.id
+	return w.WidgetId
 }
 
 // Enabled() returns whether or not this widget is currently enabled
@@ -386,20 +387,20 @@ func (w *WidgetImplement) SetTooltip(s string) {
 
 // FontSize() returns current font size. If not set the default of the current theme will be returned
 func (w *WidgetImplement) FontSize() int {
-	if w.fontSize > 0 {
-		return w.fontSize
+	if w.WidgetFontSize > 0 {
+		return w.WidgetFontSize
 	}
 	return w.theme.StandardFontSize
 }
 
 // SetFontSize() set the font size of this widget
 func (w *WidgetImplement) SetFontSize(s int) {
-	w.fontSize = s
+	w.WidgetFontSize = s
 }
 
 // HasFontSize() return whether the font size is explicitly specified for this widget
 func (w *WidgetImplement) HasFontSize() bool {
-	return w.fontSize > 0
+	return w.WidgetFontSize > 0
 }
 
 // Cursor() returns a pointer to the cursor of the widget
@@ -414,7 +415,7 @@ func (w *WidgetImplement) SetCursor(c Cursor) {
 
 // Contains() checks if the widget contains a certain position
 func (w *WidgetImplement) Contains(x, y int) bool {
-	return w.x <= x && w.y <= y && x <= w.x+w.w && y <= w.y+w.h
+	return w.WidgetPosX <= x && w.WidgetPosY <= y && x <= w.WidgetPosX+w.WidgetWidth && y <= w.WidgetPosY+w.WidgetHeight
 }
 
 func childrenReverseDepthOrder(self Widget) []Widget {
@@ -442,8 +443,8 @@ func childrenReverseDepthOrder(self Widget) []Widget {
 // FindWidget() determines the widget located at the given position value (recursive)
 func (w *WidgetImplement) FindWidget(self Widget, x, y int) Widget {
 	for _, child := range childrenReverseDepthOrder(self) {
-		if child.Contains(x-w.x, y-w.y) {
-			return child.FindWidget(child, x-w.x, y-w.y)
+		if child.Contains(x-w.WidgetPosX, y-w.WidgetPosY) {
+			return child.FindWidget(child, x-w.WidgetPosX, y-w.WidgetPosY)
 		}
 	}
 	if self.Contains(x, y) {
@@ -455,7 +456,7 @@ func (w *WidgetImplement) FindWidget(self Widget, x, y int) Widget {
 // MouseButtonEvent() handles a mouse button event (default implementation: propagate to children)
 func (w *WidgetImplement) MouseButtonEvent(self Widget, x, y int, button glfw.MouseButton, down bool, modifier glfw.ModifierKey) bool {
 	for _, child := range childrenReverseDepthOrder(self) {
-		if child.Contains(x-w.x, y-w.y) && child.MouseButtonEvent(child, x-w.x, y-w.y, button, down, modifier) {
+		if child.Contains(x-w.WidgetPosX, y-w.WidgetPosY) && child.MouseButtonEvent(child, x-w.WidgetPosX, y-w.WidgetPosY, button, down, modifier) {
 			return true
 		}
 	}
@@ -468,12 +469,12 @@ func (w *WidgetImplement) MouseButtonEvent(self Widget, x, y int, button glfw.Mo
 // MouseMotionEvent() handles a mouse motion event (default implementation: propagate to children)
 func (w *WidgetImplement) MouseMotionEvent(self Widget, x, y, relX, relY, button int, modifier glfw.ModifierKey) bool {
 	for _, child := range childrenReverseDepthOrder(self) {
-		contained := child.Contains(x-w.x, y-w.y)
-		prevContained := child.Contains(x-w.x-relX, y-w.y-relY)
+		contained := child.Contains(x-w.WidgetPosX, y-w.WidgetPosY)
+		prevContained := child.Contains(x-w.WidgetPosX-relX, y-w.WidgetPosY-relY)
 		if contained != prevContained {
 			child.MouseEnterEvent(child, x, y, contained)
 		}
-		if (contained || prevContained) && child.MouseMotionEvent(child, x-w.x, y-w.y, relX, relY, button, modifier) {
+		if (contained || prevContained) && child.MouseMotionEvent(child, x-w.WidgetPosX, y-w.WidgetPosY, relX, relY, button, modifier) {
 			return true
 		}
 	}
@@ -494,7 +495,7 @@ func (w *WidgetImplement) MouseEnterEvent(self Widget, x, y int, enter bool) boo
 // ScrollEvent() handles a mouse scroll event (default implementation: propagate to children)
 func (w *WidgetImplement) ScrollEvent(self Widget, x, y, relX, relY int) bool {
 	for _, child := range childrenReverseDepthOrder(self) {
-		if child.Contains(x-w.x, y-w.y) && child.ScrollEvent(child, x-w.x, y-w.y, relX, relY) {
+		if child.Contains(x-w.WidgetPosX, y-w.WidgetPosY) && child.ScrollEvent(child, x-w.WidgetPosX, y-w.WidgetPosY, relX, relY) {
 			return true
 		}
 	}
@@ -532,7 +533,7 @@ func (w *WidgetImplement) PreferredSize(self Widget, ctx *nanovgo.Context) (int,
 	if w.layout != nil {
 		return w.layout.PreferredSize(self, ctx)
 	}
-	return w.w, w.h
+	return w.WidgetWidth, w.WidgetHeight
 }
 
 // PerformLayout() invokes the associated layout generator to properly place child widgets, if any
@@ -556,7 +557,7 @@ func (w *WidgetImplement) Draw(self Widget, ctx *nanovgo.Context) {
 	if debugFlag {
 		ctx.SetStrokeWidth(1.0)
 		ctx.BeginPath()
-		ctx.Rect(float32(w.x)-0.5, float32(w.y)-0.5, float32(w.w)+1.0, float32(w.h)+1.0)
+		ctx.Rect(float32(w.WidgetPosX)-0.5, float32(w.WidgetPosY)-0.5, float32(w.WidgetWidth)+1.0, float32(w.WidgetHeight)+1.0)
 		ctx.SetStrokeColor(nanovgo.RGBA(255, 0, 0, 255))
 		ctx.Stroke()
 	}
@@ -564,7 +565,7 @@ func (w *WidgetImplement) Draw(self Widget, ctx *nanovgo.Context) {
 	if len(w.children) == 0 {
 		return
 	}
-	ctx.Translate(float32(w.x), float32(w.y))
+	ctx.Translate(float32(w.WidgetPosX), float32(w.WidgetPosY))
 	// draw depth 0 items
 	var drawLater widgetsAsc = make([]Widget, 0, len(w.children))
 	for _, child := range w.children {
@@ -590,7 +591,7 @@ func (w *WidgetImplement) Draw(self Widget, ctx *nanovgo.Context) {
 			child.Draw(child, ctx)
 		}
 	}
-	ctx.Translate(-float32(w.x), -float32(w.y))
+	ctx.Translate(-float32(w.WidgetPosX), -float32(w.WidgetPosY))
 }
 
 func (w *WidgetImplement) String() string {
@@ -600,15 +601,15 @@ func (w *WidgetImplement) String() string {
 func (w *WidgetImplement) StringHelper(name, extra string) string {
 	if w.layout != nil {
 		if extra != "" {
-			return fmt.Sprintf("%s [%d,%d-%d,%d] (%s) - %s", name, w.x, w.y, w.w, w.h, w.layout.String(), extra)
+			return fmt.Sprintf("%s [%d,%d-%d,%d] (%s) - %s", name, w.WidgetPosX, w.WidgetPosY, w.WidgetWidth, w.WidgetHeight, w.layout.String(), extra)
 		} else {
-			return fmt.Sprintf("%s [%d,%d-%d,%d] (%s)", name, w.x, w.y, w.w, w.h, w.layout.String())
+			return fmt.Sprintf("%s [%d,%d-%d,%d] (%s)", name, w.WidgetPosX, w.WidgetPosY, w.WidgetWidth, w.WidgetHeight, w.layout.String())
 		}
 	} else {
 		if extra != "" {
-			return fmt.Sprintf("%s [%d,%d-%d,%d] - %s", name, w.x, w.y, w.w, w.h, extra)
+			return fmt.Sprintf("%s [%d,%d-%d,%d] - %s", name, w.WidgetPosX, w.WidgetPosY, w.WidgetWidth, w.WidgetHeight, extra)
 		} else {
-			return fmt.Sprintf("%s [%d,%d-%d,%d]", name, w.x, w.y, w.w, w.h)
+			return fmt.Sprintf("%s [%d,%d-%d,%d]", name, w.WidgetPosX, w.WidgetPosY, w.WidgetWidth, w.WidgetHeight)
 		}
 	}
 }
@@ -621,16 +622,16 @@ func (w WidgetImplement) IsClipped(cx, cy, cw, ch int) bool {
 	if cy+ch < 0 {
 		return true
 	}
-	if cy > w.h {
+	if cy > w.WidgetHeight {
 		return true
 	}
 	if cx+cw < 0 {
 		return true
 	}
-	if cx > w.w {
+	if cx > w.WidgetWidth {
 		return true
 	}
-	return w.Parent().IsClipped(cx+w.x, cy+w.y, cw, ch)
+	return w.Parent().IsClipped(cx+w.WidgetPosX, cy+w.WidgetPosY, cw, ch)
 }
 
 // Sort Interface

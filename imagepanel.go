@@ -68,8 +68,8 @@ func (i *ImagePanel) PreferredSize(self Widget, ctx *nanovgo.Context) (int, int)
 func (i *ImagePanel) Draw(self Widget, ctx *nanovgo.Context) {
 	cols, _ := i.gridSize()
 
-	x := float32(i.x)
-	y := float32(i.y)
+	x := float32(i.WidgetPosX)
+	y := float32(i.WidgetPosY)
 	thumbSize := float32(i.thumbSize)
 
 	for j, image := range i.images {
@@ -117,7 +117,7 @@ func (i *ImagePanel) String() string {
 }
 
 func (i *ImagePanel) gridSize() (int, int) {
-	nCols := 1 + maxI(0, int(float32(i.w-2*i.margin-i.thumbSize)/float32(i.thumbSize+i.spacing)))
+	nCols := 1 + maxI(0, int(float32(i.WidgetWidth-2*i.margin-i.thumbSize)/float32(i.thumbSize+i.spacing)))
 	nRows := (len(i.images) + nCols - 1) / nCols
 	return nCols, nRows
 

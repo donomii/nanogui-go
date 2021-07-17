@@ -64,10 +64,10 @@ func (i *ImageView) Draw(self Widget, ctx *nanovgo.Context) {
 	if i.image == 0 {
 		return
 	}
-	x := float32(i.x)
-	y := float32(i.y)
-	ow := float32(i.w)
-	oh := float32(i.h)
+	x := float32(i.WidgetPosX)
+	y := float32(i.WidgetPosY)
+	ow := float32(i.WidgetWidth)
+	oh := float32(i.WidgetHeight)
 
 	var w, h float32
 	{

@@ -85,10 +85,10 @@ func (c *ColorWheel) Draw(self Widget, ctx *nanovgo.Context) {
 	if !c.visible {
 		return
 	}
-	x := float32(c.x)
-	y := float32(c.y)
-	w := float32(c.w)
-	h := float32(c.h)
+	x := float32(c.WidgetPosX)
+	y := float32(c.WidgetPosY)
+	w := float32(c.WidgetWidth)
+	h := float32(c.WidgetHeight)
 
 	ctx.Save()
 	defer ctx.Restore()
@@ -187,8 +187,8 @@ var sinTwoThird float32 = float32(math.Sin(-math.Pi * 2.0 / 3.0))
 var cosTwoThird float32 = float32(math.Cos(-math.Pi * 2.0 / 3.0))
 
 func (c *ColorWheel) calculatePosition() (float32, float32) {
-	w := float32(c.w)
-	h := float32(c.h)
+	w := float32(c.WidgetWidth)
+	h := float32(c.WidgetHeight)
 	hw := w * 0.5
 	hh := h * 0.5
 	r1 := toF(w < h, hw, hh) - 5.0
@@ -213,10 +213,10 @@ func (c *ColorWheel) calculatePosition() (float32, float32) {
 }
 
 func (c *ColorWheel) adjustRegion(px, py int) {
-	x := float32(px - c.x)
-	y := float32(py - c.y)
-	w := float32(c.w)
-	h := float32(c.h)
+	x := float32(px - c.WidgetPosX)
+	y := float32(py - c.WidgetPosY)
+	w := float32(c.WidgetWidth)
+	h := float32(c.WidgetHeight)
 	hw := w * 0.5
 	hh := h * 0.5
 	r1 := toF(w < h, hw, hh) - 5.0
@@ -228,10 +228,10 @@ func (c *ColorWheel) adjustRegion(px, py int) {
 
 	if mr >= radius && mr <= r1 {
 		c.dragRegion = RegionOuterCircle
-		c.adjustPosition(px-c.x, py-c.y)
+		c.adjustPosition(px-c.WidgetPosX, py-c.WidgetPosY)
 	} else if mr < radius {
 		c.dragRegion = RegionInnerTriangle
-		c.adjustPosition(px-c.x, py-c.y)
+		c.adjustPosition(px-c.WidgetPosX, py-c.WidgetPosY)
 	} else {
 		c.dragRegion = RegionNone
 	}
@@ -243,8 +243,8 @@ func (c *ColorWheel) adjustPosition(px, py int) {
 	}
 	x := float32(px)
 	y := float32(py)
-	w := float32(c.w)
-	h := float32(c.h)
+	w := float32(c.WidgetWidth)
+	h := float32(c.WidgetHeight)
 	hw := w * 0.5
 	hh := h * 0.5
 	r1 := toF(w < h, hw, hh) - 5.0

@@ -168,14 +168,14 @@ func (b *Button) ButtonGroup() []*Button {
 }
 
 func (b *Button) FontSize() int {
-	if b.fontSize > 0 {
-		return b.fontSize
+	if b.WidgetFontSize > 0 {
+		return b.WidgetFontSize
 	}
 	return b.theme.ButtonFontSize
 }
 
 func (b *Button) SetFontSize(size int) {
-	b.fontSize = size
+	b.WidgetFontSize = size
 }
 
 func (b *Button) MouseButtonEvent(self Widget, x, y int, button glfw.MouseButton, down bool, modifier glfw.ModifierKey) bool {
@@ -251,7 +251,7 @@ func (b *Button) PreferredSize(self Widget, ctx *nanovgo.Context) (int, int) {
 		ctx.SetFontFace(b.theme.FontIcons)
 		ctx.SetFontSize(ih)
 		iw, _ = ctx.TextBounds(0, 0, string([]rune{rune(b.icon)}))
-		iw += float32(b.y) * 0.15
+		iw += float32(b.WidgetPosY) * 0.15
 	} else if b.imageIcon > 0 {
 		ih *= 0.9
 		w, h, _ := ctx.ImageSize(b.imageIcon)
@@ -263,10 +263,10 @@ func (b *Button) PreferredSize(self Widget, ctx *nanovgo.Context) (int, int) {
 func (b *Button) Draw(self Widget, ctx *nanovgo.Context) {
 	b.WidgetImplement.Draw(self, ctx)
 
-	bx := float32(b.x)
-	by := float32(b.y)
-	bw := float32(b.w)
-	bh := float32(b.h)
+	bx := float32(b.WidgetPosX)
+	by := float32(b.WidgetPosY)
+	bw := float32(b.WidgetWidth)
+	bh := float32(b.WidgetHeight)
 
 	var gradTop nanovgo.Color
 	var gradBot nanovgo.Color
@@ -345,7 +345,7 @@ func (b *Button) Draw(self Widget, ctx *nanovgo.Context) {
 			iw = float32(w) * ih / float32(h)
 		}
 		if b.caption != "" {
-			iw += float32(b.h) * 0.15
+			iw += float32(b.WidgetHeight) * 0.15
 		}
 		ctx.SetFillColor(textColor)
 		ctx.SetTextAlign(nanovgo.AlignLeft | nanovgo.AlignMiddle)

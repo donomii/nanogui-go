@@ -59,7 +59,7 @@ func (s *Slider) MouseDragEvent(self Widget, x, y, relX, relY, button int, modif
 	if !s.enabled {
 		return false
 	}
-	s.value = clampF(float32(x-s.x)/float32(s.w), 0.0, 1.0)
+	s.value = clampF(float32(x-s.WidgetPosX)/float32(s.WidgetWidth), 0.0, 1.0)
 	if s.callback != nil {
 		s.callback(s.value)
 	}
@@ -70,7 +70,7 @@ func (s *Slider) MouseButtonEvent(self Widget, x, y int, button glfw.MouseButton
 	if !s.enabled {
 		return false
 	}
-	s.value = clampF(float32(x-s.x)/float32(s.w), 0.0, 1.0)
+	s.value = clampF(float32(x-s.WidgetPosX)/float32(s.WidgetWidth), 0.0, 1.0)
 	if s.callback != nil {
 		s.callback(s.value)
 	}
@@ -85,10 +85,10 @@ func (s *Slider) PreferredSize(self Widget, ctx *nanovgo.Context) (int, int) {
 }
 
 func (s *Slider) Draw(self Widget, ctx *nanovgo.Context) {
-	sx := float32(s.x)
-	sy := float32(s.y)
-	sw := float32(s.w)
-	sh := float32(s.h)
+	sx := float32(s.WidgetPosX)
+	sy := float32(s.WidgetPosY)
+	sw := float32(s.WidgetWidth)
+	sh := float32(s.WidgetHeight)
 	cy := sy + sh*0.5
 	kx := sx + s.value*sw
 	ky := cy + 0.5

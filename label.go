@@ -116,10 +116,10 @@ func (l *Label) Draw(self Widget, ctx *nanovgo.Context) {
 
 	if width > 0 {
 		ctx.SetTextAlign(nanovgo.AlignLeft | nanovgo.AlignTop)
-		ctx.TextBox(float32(l.x), float32(l.y), float32(width), l.caption)
+		ctx.TextBox(float32(l.WidgetPosX), float32(l.WidgetPosY), float32(width), l.caption)
 	} else {
 		ctx.SetTextAlign(nanovgo.AlignLeft | nanovgo.AlignMiddle)
-		ctx.Text(float32(l.x), float32(l.y)+float32(l.h)*0.5, l.caption)
+		ctx.Text(float32(l.WidgetPosX), float32(l.WidgetPosY)+float32(l.WidgetHeight)*0.5, l.caption)
 	}
 }
 

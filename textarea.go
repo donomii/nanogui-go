@@ -63,7 +63,7 @@ func (t *TextArea) init(value string) {
 	t.mousePos = [2]int{-1, -1}
 	t.mouseDownPos = [2]int{-1, -1}
 	t.mouseDragPos = [2]int{-1, -1}
-	t.fontSize = t.theme.TextBoxFontSize
+	t.WidgetFontSize = t.theme.TextBoxFontSize
 }
 
 func (t *TextArea) Editable() bool {
@@ -447,10 +447,10 @@ func drawParagraph(ctx *nanovgo.Context, x, y, width, height, mx, my float32, te
 func (t *TextArea) Draw(self Widget, ctx *nanovgo.Context) {
 	t.WidgetImplement.Draw(self, ctx)
 
-	x := float32(t.x)
-	y := float32(t.y)
-	w := float32(t.w)
-	h := float32(t.h)
+	x := float32(t.WidgetPosX)
+	y := float32(t.WidgetPosY)
+	w := float32(t.WidgetWidth)
+	h := float32(t.WidgetHeight)
 	drawParagraph(ctx,x,y,w,h,float32(t.mousePos[0]),float32(t.mousePos[1]), t.value)
 	return
 }

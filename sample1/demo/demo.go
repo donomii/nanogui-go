@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/donomii/goof"
-	"github.com/donomii/nanogui-go"
+	//"github.com/donomii/nanogui-go"
+	nanogui "../.."
 	"github.com/shibukawa/nanovgo"
 )
 
@@ -156,8 +157,41 @@ func BasicWidgetsDemo(screen *nanogui.Screen, images []nanogui.Image) (*nanogui.
 	return imagePanelButton, imgPanel, progress
 }
 
+type ActorStruct struct {
+	Window *nanogui.Window
+	inbox  string //Replace with message struct
+	Data   map[string][]byte
+	Id     string
+}
+
+var ActorList []*ActorStruct
+var nextActorId int
+
+func NewActor(window *nanogui.Window) *ActorStruct {
+	actor := ActorStruct{}
+	actor.Window = window
+	actor.Id = fmt.Sprintf("%v", nextActorId)
+	nextActorId += 1
+	if ActorList == nil {
+		ActorList = []*ActorStruct{}
+	}
+
+	ActorList = append(ActorList, &actor)
+	return &actor
+}
+
 func ViewWin(screen *nanogui.Screen) {
 	window := nanogui.NewWindow(screen, "Command Window")
+
+	if WindowList == nil {
+		WindowList = []*nanogui.Window{}
+	}
+
+	WindowList = append(WindowList, window)
+
+	NewActor(window)
+	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
+	nextWindowId += 1
 	window.SetPosition(545, 15)
 	window.SetLayout(nanogui.NewGroupLayout())
 	nanogui.NewLabel(window, "Regular text :").SetFont("sans-bold")
@@ -186,8 +220,12 @@ func ViewWin(screen *nanogui.Screen) {
 
 }
 
+var WindowList []*nanogui.Window
+var nextWindowId int
+
 func ControlPanel(screen *nanogui.Screen) {
 	window := nanogui.NewWindow(screen, "Control Panel")
+
 	window.SetPosition(545, 15)
 	window.SetLayout(nanogui.NewGroupLayout())
 	b4 := nanogui.NewButton(window, "New Window")
@@ -198,10 +236,23 @@ func ControlPanel(screen *nanogui.Screen) {
 
 	b5 := nanogui.NewButton(window, "Save")
 	b5.SetCallback(func() {
-		out, _ := json.Marshal(WindowList)
-		ioutil.WriteFile("windlow.json", out, 0777)
+		out, _ := json.MarshalIndent(ActorList, "", "	")
+		ioutil.WriteFile("windows.json", out, 0777)
 	})
 
+	b6 := nanogui.NewButton(window, "Load")
+	b6.SetCallback(func() {
+		file, _ := ioutil.ReadFile("windows.json")
+		var tmpList []*ActorStruct
+		json.Unmarshal(file, &tmpList)
+		for range tmpList {
+			ViewWin(screen)
+			screen.PerformLayout()
+		}
+		json.Unmarshal(file, &ActorList)
+		screen.PerformLayout()
+
+	})
 	nanogui.NewLabel(window, "Color wheel").SetFont("sans-bold")
 	nanogui.NewColorWheel(window)
 
@@ -227,7 +278,7 @@ func MiscWidgetsDemo(screen *nanogui.Screen) {
 	window.SetLayout(nanogui.NewGroupLayout())
 	b4 := nanogui.NewButton(window, "New Window")
 	b4.SetCallback(func() {
-		GenericWindow(screen)
+		ControlPanel(screen)
 		screen.PerformLayout()
 	})
 

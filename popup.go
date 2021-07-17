@@ -62,7 +62,7 @@ func (p *Popup) OnPerformLayout(self Widget, ctx *nanovgo.Context) {
 		p.WidgetImplement.OnPerformLayout(self, ctx)
 	} else {
 		p.children[0].SetPosition(0, 0)
-		p.children[0].SetSize(p.w, p.h)
+		p.children[0].SetSize(p.WidgetWidth, p.WidgetHeight)
 		p.children[0].OnPerformLayout(p.children[0], ctx)
 	}
 }
@@ -80,10 +80,10 @@ func (p *Popup) Draw(self Widget, ctx *nanovgo.Context) {
 	ds := float32(p.theme.WindowDropShadowSize)
 	cr := float32(p.theme.WindowCornerRadius)
 
-	px := float32(p.x)
-	py := float32(p.y)
-	pw := float32(p.w)
-	ph := float32(p.h)
+	px := float32(p.WidgetPosX)
+	py := float32(p.WidgetPosY)
+	pw := float32(p.WidgetWidth)
+	ph := float32(p.WidgetHeight)
 	ah := float32(p.anchorHeight)
 
 	/* Draw a drop shadow */
@@ -115,8 +115,8 @@ func (p *Popup) RefreshRelativePlacement() {
 	p.parentWindow.RefreshRelativePlacement()
 	p.visible = p.visible && p.parentWindow.VisibleRecursive()
 	x, y := p.parentWindow.Position()
-	p.x = x + p.anchorX
-	p.y = y + p.anchorY - p.anchorHeight
+	p.WidgetPosX = x + p.anchorX
+	p.WidgetPosY = y + p.anchorY - p.anchorHeight
 }
 
 func (p *Popup) FindWindow() IWindow {

@@ -158,7 +158,7 @@ func finalizeScreen(s *Screen) {
 func (s *Screen) Initialize(window *glfw.Window, shutdownGLFWOnDestruct bool) {
 	s.window = window
 	s.shutdownGLFWOnDestruct = shutdownGLFWOnDestruct
-	s.w, s.h = window.GetSize()
+	s.WidgetWidth, s.WidgetHeight = window.GetSize()
 	s.fbW, s.fbH = window.GetFramebufferSize()
 	var err error
 	s.context, err = nanovgo.NewContext(nanovgo.StencilStrokes | nanovgo.AntiAlias)
@@ -420,11 +420,11 @@ func (s *Screen) drawWidgets() {
 	}
 	s.window.MakeContextCurrent()
 	s.fbW, s.fbH = s.window.GetFramebufferSize()
-	s.w, s.h = s.window.GetSize()
+	s.WidgetWidth, s.WidgetHeight = s.window.GetSize()
 	gl.Viewport(0, 0, s.fbW, s.fbH)
 
-	s.pixelRatio = float32(s.fbW) / float32(s.w)
-	s.context.BeginFrame(s.w, s.h, s.pixelRatio)
+	s.pixelRatio = float32(s.fbW) / float32(s.WidgetWidth)
+	s.context.BeginFrame(s.WidgetWidth, s.WidgetHeight, s.pixelRatio)
 	s.Draw(s, s.context)
 	elapsed := GetTime() - s.lastInteraction
 
@@ -588,8 +588,8 @@ func (s *Screen) resizeCallbackEvent(width, height int) bool {
 	}
 	s.fbW = fbW
 	s.fbH = fbH
-	s.w = w
-	s.h = h
+	s.WidgetWidth = w
+	s.WidgetHeight = h
 	s.lastInteraction = GetTime()
 	if s.resizeEventCallback != nil {
 		return s.resizeEventCallback(int(float32(fbW)/s.pixelRatio), int(float32(fbH)/s.pixelRatio))
@@ -609,13 +609,13 @@ func (s *Screen) IsClipped(cx, cy, cw, ch int) bool {
 	if cy+ch < 0 {
 		return true
 	}
-	if cy > s.h {
+	if cy > s.WidgetHeight {
 		return true
 	}
 	if cx+cw < 0 {
 		return true
 	}
-	if cx > s.w {
+	if cx > s.WidgetWidth {
 		return true
 	}
 	return false

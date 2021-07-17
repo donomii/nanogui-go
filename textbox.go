@@ -72,7 +72,7 @@ func (t *TextBox) init(value string) {
 	t.mousePos = [2]int{-1, -1}
 	t.mouseDownPos = [2]int{-1, -1}
 	t.mouseDragPos = [2]int{-1, -1}
-	t.fontSize = t.theme.TextBoxFontSize
+	t.WidgetFontSize = t.theme.TextBoxFontSize
 }
 
 func (t *TextBox) Editable() bool {
@@ -354,10 +354,10 @@ func (t *TextBox) PreferredSize(self Widget, ctx *nanovgo.Context) (int, int) {
 func (t *TextBox) Draw(self Widget, ctx *nanovgo.Context) {
 	t.WidgetImplement.Draw(self, ctx)
 
-	x := float32(t.x)
-	y := float32(t.y)
-	w := float32(t.w)
-	h := float32(t.h)
+	x := float32(t.WidgetPosX)
+	y := float32(t.WidgetPosY)
+	w := float32(t.WidgetWidth)
+	h := float32(t.WidgetHeight)
 
 	bg := nanovgo.BoxGradient(x+1, y+2, w-2, h-2, 3, 4, nanovgo.MONO(255, 32), nanovgo.MONO(32, 32))
 	fg1 := nanovgo.BoxGradient(x+1, y+2, w-2, h-2, 3, 4, nanovgo.MONO(150, 32), nanovgo.MONO(32, 32))
