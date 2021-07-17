@@ -1,0 +1,30 @@
+[
+	{
+		"Window": {
+			"WidgetPosX": 33,
+			"WidgetPosY": 3,
+			"WidgetWidth": 550,
+			"WidgetHeight": 601,
+			"WidgetId": "0",
+			"WidgetFontSize": -1,
+			"WindowTitle": "Command Window",
+			"WindowDepth": 7
+		},
+		"Data": null,
+		"Id": "0"
+	},
+	{
+		"Window": {
+			"WidgetPosX": 61,
+			"WidgetPosY": 167,
+			"WidgetWidth": 550,
+			"WidgetHeight": 601,
+			"WidgetId": "1",
+			"WidgetFontSize": -1,
+			"WindowTitle": "Command Window",
+			"WindowDepth": 10
+		},
+		"Data": null,
+		"Id": "1"
+	}
+]
