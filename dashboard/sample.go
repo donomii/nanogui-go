@@ -13,6 +13,8 @@ import (
 
 	"github.com/shibukawa/glfw"
 	//"github.com/shibukawa/nanogui.go"
+	_ "embed"
+
 	nanogui ".."
 	"github.com/shibukawa/nanovgo"
 )
@@ -23,11 +25,15 @@ type Application struct {
 	shader   *nanogui.GLShader
 }
 
+//go:embed "font/GenShinGothic-P-Regular.ttf"
+var defaultFont []byte
+
 func (a *Application) init() {
 	glfw.WindowHint(glfw.Samples, 4)
 	a.screen = nanogui.NewScreen(1024, 768, "NanoGUI.Go Test", true, false)
 
-	a.screen.NVGContext().CreateFont("japanese", "font/GenShinGothic-P-Regular.ttf")
+	fd := uint8(0)
+	a.screen.NVGContext().CreateFontFromMemory("japanese", defaultFont, fd)
 
 	demo.ControlPanel(a.screen)
 
