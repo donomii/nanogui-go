@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/donomii/nanogui-go"
 	"github.com/goxjs/gl"
 	"github.com/shibukawa/glfw"
 )
@@ -14,10 +13,10 @@ var startTime time.Time
 var debugFlag bool
 
 type Application struct {
-	screen            *nanogui.Screen
+	Screen            *Screen
 	MainThreadThunker chan func()
-	progress          *nanogui.ProgressBar
-	shader            *nanogui.GLShader
+	Progress          *ProgressBar
+	Shader            *GLShader
 }
 
 func Init() {
@@ -32,7 +31,7 @@ func GetTime() float32 {
 	return float32(time.Now().Sub(startTime)/time.Millisecond) * 0.001
 }
 
-func MainLoop(app Application) {
+func MainLoop(app *Application) {
 	mainloopActive = true
 
 	var wg sync.WaitGroup
