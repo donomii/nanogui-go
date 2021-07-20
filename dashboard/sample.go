@@ -19,19 +19,14 @@ import (
 	"github.com/shibukawa/nanovgo"
 )
 
-type Application struct {
-	screen   *nanogui.Screen
-	progress *nanogui.ProgressBar
-	shader   *nanogui.GLShader
-}
-
 //go:embed "font/GenShinGothic-P-Regular.ttf"
 var defaultFont []byte
 
-func (a *Application) init() {
+func (a *nanogui.Application) init() {
+
 	glfw.WindowHint(glfw.Samples, 4)
 	a.screen = nanogui.NewScreen(1024, 768, "NanoGUI.Go Test", true, false)
-
+	a.MainThreadThunker = make(chan func(), 20)
 	fd := uint8(0)
 	a.screen.NVGContext().CreateFontFromMemory("japanese", defaultFont, fd)
 

@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/donomii/nanogui-go"
 	"github.com/goxjs/gl"
 	"github.com/shibukawa/glfw"
 )
@@ -11,6 +12,13 @@ import (
 var mainloopActive bool = false
 var startTime time.Time
 var debugFlag bool
+
+type Application struct {
+	screen            *nanogui.Screen
+	MainThreadThunker chan func()
+	progress          *nanogui.ProgressBar
+	shader            *nanogui.GLShader
+}
 
 func Init() {
 	err := glfw.Init(gl.ContextWatcher)
@@ -24,7 +32,7 @@ func GetTime() float32 {
 	return float32(time.Now().Sub(startTime)/time.Millisecond) * 0.001
 }
 
-func MainLoop() {
+func MainLoop(app Application) {
 	mainloopActive = true
 
 	var wg sync.WaitGroup
@@ -49,6 +57,10 @@ func MainLoop() {
 			} else if screen.GLFWWindow().ShouldClose() {
 				screen.SetVisible(false)
 				continue
+			}
+			if len(app.MainThreadThunker) > 0 {
+				f := <-app.MainThreadThunker
+				f()
 			}
 			//screen.DebugPrint()
 
