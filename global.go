@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/donomii/nanogui-go"
 	"github.com/goxjs/gl"
 	"github.com/shibukawa/glfw"
 )
@@ -14,10 +13,10 @@ var startTime time.Time
 var debugFlag bool
 
 type Application struct {
-	screen            *nanogui.Screen
+	screen            *Screen
 	MainThreadThunker chan func()
-	progress          *nanogui.ProgressBar
-	shader            *nanogui.GLShader
+	progress          *ProgressBar
+	shader            *GLShader
 }
 
 func Init() {
