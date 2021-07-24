@@ -22,18 +22,18 @@ import (
 //go:embed "font/GenShinGothic-P-Regular.ttf"
 var defaultFont []byte
 
-func (a *nanogui.Application) init() {
+func myinit(a *nanogui.Application) {
 
 	glfw.WindowHint(glfw.Samples, 4)
-	a.screen = nanogui.NewScreen(1024, 768, "NanoGUI.Go Test", true, false)
+	a.Screen = nanogui.NewScreen(1024, 768, "NanoGUI.Go Test", true, false)
 	a.MainThreadThunker = make(chan func(), 20)
 	fd := uint8(0)
-	a.screen.NVGContext().CreateFontFromMemory("japanese", defaultFont, fd)
+	a.Screen.NVGContext().CreateFontFromMemory("japanese", defaultFont, fd)
 
-	demo.ControlPanel(a.screen)
+	demo.ControlPanel(app, a.Screen)
 
-	a.screen.PerformLayout()
-	a.screen.DebugPrint()
+	a.Screen.PerformLayout()
+	a.Screen.DebugPrint()
 
 	/* All NanoGUI widgets are initialized at this point. Now
 	create an OpenGL shader to draw the main window contents.
@@ -44,16 +44,16 @@ func (a *nanogui.Application) init() {
 	*/
 }
 
-var app Application
+var app *nanogui.Application
 
 func main() {
 	nanogui.Init()
 	//nanogui.SetDebug(true)
-	app = Application{}
-	app.init()
-	app.screen.DrawAll()
-	app.screen.SetVisible(true)
-	nanogui.MainLoop()
+	app = &nanogui.Application{}
+	myinit(app)
+	app.Screen.DrawAll()
+	app.Screen.SetVisible(true)
+	nanogui.MainLoop(app)
 }
 
 func loadImageDirectory(ctx *nanovgo.Context, dir string) []nanogui.Image {

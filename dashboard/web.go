@@ -4,20 +4,15 @@ package main
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/shibukawa/glfw"
 	"github.com/shibukawa/nanogui.go"
 	"github.com/shibukawa/nanogui.go/sample1/demo"
 	"github.com/shibukawa/nanovgo"
-	"math"
 )
 
-type Application struct {
-	screen   *nanogui.Screen
-	progress *nanogui.ProgressBar
-	shader   *nanogui.GLShader
-}
-
-func (a *Application) init() {
+func (a *nanogui.Application) init() {
 	glfw.WindowHint(glfw.Samples, 4)
 	a.screen = nanogui.NewScreen(1024, 768, "NanoGUI.Go Test", true, false)
 

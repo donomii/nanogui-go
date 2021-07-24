@@ -135,7 +135,7 @@ func MaxFloat32(flist ...float32) float32 {
 	return max
 }
 
-func GraphWin(screen *nanogui.Screen) *nanogui.Window {
+func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 
 	window := nanogui.NewWindow(screen, "Command Window")
 
@@ -227,10 +227,12 @@ func GraphWin(screen *nanogui.Screen) *nanogui.Window {
 			data := string(body)
 			data = strings.Replace(data, ",", ", ", -1)
 			textBox1.SetValue(fmt.Sprintf("%+v\n", string(body)))
+			app.MainThreadThunker <- func() {
+				ctx := screen.NVGContext()
+				gr := ctx.CreateImageFromGoImage(0, nanogui.StripChart())
+				img.SetImage(gr)
+			}
 
-			ctx := screen.NVGContext()
-			gr := ctx.CreateImageFromGoImage(0, nanogui.StripChart())
-			img.SetImage(gr)
 		}
 	}()
 
@@ -238,14 +240,6 @@ func GraphWin(screen *nanogui.Screen) *nanogui.Window {
 }
 
 func ViewWin(screen *nanogui.Screen) *nanogui.Window {
-
-	resp, err := http.Get("http://admin:admin@192.168.178.22:3000/api/datasources/proxy/1/api/v1/query_range?query=node_procs_running&start=1626718680&end=1626718980&step=15")
-	if err != nil {
-		// handle error
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	txt := string(body)
 
 	window := nanogui.NewWindow(screen, "Command Window")
 
@@ -263,14 +257,14 @@ func ViewWin(screen *nanogui.Screen) *nanogui.Window {
 	window.SetLayout(nanogui.NewGroupLayout())
 
 	nanogui.NewLabel(window, "Shell command :").SetFont("sans-bold")
-	textBox := nanogui.NewTextBox(window, "dir")
+	textBox := nanogui.NewTextBox(window, "ls")
 	textBox.SetFont("japanese")
 	textBox.SetEditable(true)
 	//textBox.SetFixedSize(500, 20)
 	textBox.SetDefaultValue("0.0")
 	textBox.SetFontSize(16)
 
-	//txt := goof.Shell("dir")
+	txt := ""
 	textBox1 := nanogui.NewTextArea(window, txt)
 	textBox1.SetFont("japanese")
 	textBox1.SetEditable(true)
@@ -282,6 +276,7 @@ func ViewWin(screen *nanogui.Screen) *nanogui.Window {
 		for {
 			time.Sleep(1 * time.Second)
 			data := goof.Shell(textBox.Value())
+			data = strings.ReplaceAll(data, "\n", "\n\n")
 			textBox1.SetValue(data)
 		}
 	}()
@@ -292,7 +287,7 @@ func ViewWin(screen *nanogui.Screen) *nanogui.Window {
 var WindowList []*nanogui.Window
 var nextWindowId int
 
-func ControlPanel(screen *nanogui.Screen) {
+func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 	window := nanogui.NewWindow(screen, "Control Panel")
 
 	window.SetPosition(545, 15)
@@ -305,7 +300,7 @@ func ControlPanel(screen *nanogui.Screen) {
 
 	b7 := nanogui.NewButton(window, "Graph Window")
 	b7.SetCallback(func() {
-		GraphWin(screen)
+		GraphWin(app, screen)
 		screen.PerformLayout()
 	})
 
