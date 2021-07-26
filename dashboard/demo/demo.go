@@ -93,10 +93,12 @@ type response struct {
 }
 
 type ActorStruct struct {
-	Window *nanogui.Window
-	inbox  string //Replace with message struct
-	Data   map[string][]byte
-	Id     string
+	Window  *nanogui.Window
+	inbox   string //Replace with message struct
+	Data    map[string][]byte
+	Id      string
+	WinType string
+	Serial  string
 }
 
 var ActorList []*ActorStruct
@@ -135,9 +137,9 @@ func MaxFloat32(flist ...float32) float32 {
 	return max
 }
 
-func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
+func ThreeDeeWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 
-	window := nanogui.NewWindow(screen, "Command Window")
+	window := nanogui.NewWindow(screen, "3D Window")
 
 	if WindowList == nil {
 		WindowList = []*nanogui.Window{}
@@ -145,7 +147,53 @@ func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window 
 
 	WindowList = append(WindowList, window)
 
-	NewActor(window)
+	actor := NewActor(window)
+	actor.WinType = "ThreeDeeWin"
+
+	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
+	nextWindowId += 1
+	window.SetPosition(545, 15)
+	nanogui.NewResize(window, window)
+	window.SetLayout(nanogui.NewGroupLayout())
+
+	img := nanogui.NewImageView(window)
+	img.SetPolicy(nanogui.ImageSizePolicyExpand)
+	//img.SetFixedSize(350, 350)
+	img.SetSize(350, 350)
+
+	go func() {
+		n := 0
+		for {
+			n = n + 1
+			if n > 360 {
+				n = 0
+			}
+			time.Sleep(100 * time.Millisecond)
+			app.MainThreadThunker <- func() {
+				ctx := screen.NVGContext()
+				gr := ctx.CreateImageFromGoImage(0, make3D(n))
+				img.SetImage(gr)
+			}
+
+		}
+	}()
+
+	return window
+}
+
+func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
+
+	window := nanogui.NewWindow(screen, "Graph Window")
+
+	if WindowList == nil {
+		WindowList = []*nanogui.Window{}
+	}
+
+	WindowList = append(WindowList, window)
+
+	actor := NewActor(window)
+	actor.WinType = "GraphWin"
+
 	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
 	nextWindowId += 1
 	window.SetPosition(545, 15)
@@ -239,7 +287,7 @@ func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window 
 	return window
 }
 
-func ViewWin(screen *nanogui.Screen) *nanogui.Window {
+func ViewWin(screen *nanogui.Screen, s string) *nanogui.Window {
 
 	window := nanogui.NewWindow(screen, "Command Window")
 
@@ -249,7 +297,9 @@ func ViewWin(screen *nanogui.Screen) *nanogui.Window {
 
 	WindowList = append(WindowList, window)
 
-	NewActor(window)
+	actor := NewActor(window)
+	actor.WinType = "ViewWin"
+
 	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
 	nextWindowId += 1
 	window.SetPosition(545, 15)
@@ -257,7 +307,7 @@ func ViewWin(screen *nanogui.Screen) *nanogui.Window {
 	window.SetLayout(nanogui.NewGroupLayout())
 
 	nanogui.NewLabel(window, "Shell command :").SetFont("sans-bold")
-	textBox := nanogui.NewTextBox(window, "ls")
+	textBox := nanogui.NewTextBox(window, s)
 	textBox.SetFont("japanese")
 	textBox.SetEditable(true)
 	//textBox.SetFixedSize(500, 20)
@@ -276,7 +326,8 @@ func ViewWin(screen *nanogui.Screen) *nanogui.Window {
 		for {
 			time.Sleep(1 * time.Second)
 			data := goof.Shell(textBox.Value())
-			data = strings.ReplaceAll(data, "\n", "\n\n")
+			actor.Serial = textBox.Value()
+			data = strings.ReplaceAll(data, "\n", "\r\n\n")
 			textBox1.SetValue(data)
 		}
 	}()
@@ -294,13 +345,19 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 	window.SetLayout(nanogui.NewGroupLayout())
 	b4 := nanogui.NewButton(window, "Shell Monitor")
 	b4.SetCallback(func() {
-		ViewWin(screen)
+		ViewWin(screen, "ls")
 		screen.PerformLayout()
 	})
 
 	b7 := nanogui.NewButton(window, "Graph Window")
 	b7.SetCallback(func() {
 		GraphWin(app, screen)
+		screen.PerformLayout()
+	})
+
+	b8 := nanogui.NewButton(window, "3D Window")
+	b8.SetCallback(func() {
+		ThreeDeeWin(app, screen)
 		screen.PerformLayout()
 	})
 
@@ -316,9 +373,22 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 		var tmpList []*ActorStruct
 		json.Unmarshal(file, &tmpList)
 		for _, set := range tmpList {
-			win := ViewWin(screen)
-			win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
-			screen.PerformLayout()
+			switch set.WinType {
+			case "ViewWin":
+				win := ViewWin(screen, set.Serial)
+				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
+				screen.PerformLayout()
+			case "GraphWin":
+				win := GraphWin(app, screen)
+				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
+				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
+				screen.PerformLayout()
+			case "ThreeDeeWin":
+				win := ThreeDeeWin(app, screen)
+				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
+				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
+				screen.PerformLayout()
+			}
 		}
 		json.Unmarshal(file, &ActorList)
 		screen.PerformLayout()
@@ -327,7 +397,6 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 
 	nanogui.NewLabel(window, "Color picker").SetFont("sans-bold")
 	nanogui.NewColorPicker(window)
-
 }
 
 func SelectedImageDemo(screen *nanogui.Screen, imageButton *nanogui.PopupButton, imagePanel *nanogui.ImagePanel) {
