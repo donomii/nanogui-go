@@ -1,7 +1,6 @@
 package demo
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"math"
@@ -13,7 +12,7 @@ func make3D(n int) image.Image {
 
 	i := n
 	n = 360
-	fmt.Printf("frame %d/%d\n", i, n)
+	//fmt.Printf("frame %d/%d\n", i, n)
 
 	p := pinhole.New()
 	p.Begin()

@@ -1,5 +1,3 @@
 #!/bin/sh
-pushd util
-python gen_icon_symbols.py
-popd
-go-bindata -pkg nanogui -o fonts.go fonts
+go build -v -o dash dashboard/dashboard.go
+./dash
