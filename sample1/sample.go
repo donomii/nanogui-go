@@ -19,32 +19,32 @@ import (
 )
 
 type Application struct {
-	screen   *nanogui.Screen
-	progress *nanogui.ProgressBar
+	Screen   *nanogui.Screen
+	Progress *nanogui.ProgressBar
 	shader   *nanogui.GLShader
 }
 
-func (a *Application) init() {
+func myinit(a *nanogui.Application) {
 	glfw.WindowHint(glfw.Samples, 4)
-	a.screen = nanogui.NewScreen(1024, 768, "NanoGUI.Go Test", true, false)
+	a.Screen = nanogui.NewScreen(1024, 768, "NanoGUI.Go Test", true, false)
 
-	a.screen.NVGContext().CreateFont("japanese", "font/GenShinGothic-P-Regular.ttf")
+	a.Screen.NVGContext().CreateFont("japanese", "font/GenShinGothic-P-Regular.ttf")
 
-	demo.ButtonDemo(a.screen)
-	images := loadImageDirectory(a.screen.NVGContext(), "icons")
-	imageButton, imagePanel, progressBar := demo.BasicWidgetsDemo(a.screen, images)
-	a.progress = progressBar
-	demo.SelectedImageDemo(a.screen, imageButton, imagePanel)
-	demo.MiscWidgetsDemo(a.screen)
-	demo.GridDemo(a.screen)
-	demo.ControlPanel(a.screen)
+	demo.ButtonDemo(a.Screen)
+	images := loadImageDirectory(a.Screen.NVGContext(), "icons")
+	imageButton, imagePanel, ProgressBar := demo.BasicWidgetsDemo(a.Screen, images)
+	a.Progress = ProgressBar
+	demo.SelectedImageDemo(a.Screen, imageButton, imagePanel)
+	demo.MiscWidgetsDemo(a.Screen)
+	demo.GridDemo(a.Screen)
+	demo.ControlPanel(a.Screen)
 
-	a.screen.SetDrawContentsCallback(func() {
-		a.progress.SetValue(float32(math.Mod(float64(nanogui.GetTime())/10, 1.0)))
+	a.Screen.SetDrawContentsCallback(func() {
+		a.Progress.SetValue(float32(math.Mod(float64(nanogui.GetTime())/10, 1.0)))
 	})
 
-	a.screen.PerformLayout()
-	a.screen.DebugPrint()
+	a.Screen.PerformLayout()
+	a.Screen.DebugPrint()
 
 	/* All NanoGUI widgets are initialized at this point. Now
 	create an OpenGL shader to draw the main window contents.
@@ -55,16 +55,16 @@ func (a *Application) init() {
 	*/
 }
 
-var app Application
+var app *nanogui.Application
 
 func main() {
 	nanogui.Init()
 	//nanogui.SetDebug(true)
-	app = Application{}
-	app.init()
-	app.screen.DrawAll()
-	app.screen.SetVisible(true)
-	nanogui.MainLoop()
+	app = &nanogui.Application{}
+	myinit(app)
+	app.Screen.DrawAll()
+	app.Screen.SetVisible(true)
+	nanogui.MainLoop(app)
 }
 
 func loadImageDirectory(ctx *nanovgo.Context, dir string) []nanogui.Image {

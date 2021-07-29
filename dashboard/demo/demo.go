@@ -3,9 +3,13 @@ package demo
 import (
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/png"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -14,6 +18,11 @@ import (
 	"github.com/donomii/goof"
 	"github.com/prometheus/prometheus/pkg/textparse"
 	"github.com/prometheus/prometheus/util/stats"
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/plotutil"
+	"gonum.org/v1/plot/vg/draw"
+	"gonum.org/v1/plot/vg/vgimg"
 
 	//"github.com/donomii/nanogui-go"
 	nanogui "../.."
@@ -50,6 +59,18 @@ type Labels []Label
 type Point struct {
 	Time  float64
 	Value string
+}
+
+type Smeta struct {
+	Min, Max       float64
+	Name, Instance string
+}
+
+type DataTable struct {
+	Title, Xlabel, Ylabel string
+	Series                [][][]float64
+	ScaledSeries          [][][]float64
+	SeriesMeta            []Smeta
 }
 
 func (this *Point) UnmarshalJSON(text []byte) (err error) {
@@ -127,7 +148,27 @@ func MinFloat32(flist ...float32) float32 {
 	return min
 }
 
+func MinFloat64(flist ...float64) float64 {
+	min := flist[0]
+	for _, v := range flist {
+		if v < min {
+			min = v
+		}
+	}
+	return min
+}
+
 func MaxFloat32(flist ...float32) float32 {
+	max := flist[0]
+	for _, v := range flist {
+		if v > max {
+			max = v
+		}
+	}
+	return max
+}
+
+func MaxFloat64(flist ...float64) float64 {
 	max := flist[0]
 	for _, v := range flist {
 		if v > max {
@@ -155,7 +196,7 @@ func ThreeDeeWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Wind
 	window.SetPosition(545, 15)
 	nanogui.NewResize(window, window)
 	window.SetLayout(nanogui.NewGroupLayout())
-
+	choice := nanogui.NewComboBox(window, []string{"CubeAndCircles", "Globe", "Spirals"})
 	img := nanogui.NewImageView(window)
 	img.SetPolicy(nanogui.ImageSizePolicyExpand)
 	//img.SetFixedSize(350, 350)
@@ -169,9 +210,20 @@ func ThreeDeeWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Wind
 				n = 0
 			}
 			time.Sleep(100 * time.Millisecond)
+			var im image.Image
+			switch choice.SelectedIndex() {
+			case 0:
+				im = boxAndCircles(n)
+			case 1:
+				im = make3D(n)
+			case 2:
+				im = spiral(n)
+			default:
+				im = make3D(n)
+			}
 			app.MainThreadThunker <- func() {
 				ctx := screen.NVGContext()
-				gr := ctx.CreateImageFromGoImage(0, make3D(n))
+				gr := ctx.CreateImageFromGoImage(0, im)
 				img.SetImage(gr)
 			}
 
@@ -179,6 +231,52 @@ func ThreeDeeWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Wind
 	}()
 
 	return window
+}
+
+func ToFloat32(l []float64) []float32 {
+	out := make([]float32, len(l))
+	for i, v := range l {
+		out[i] = float32(v)
+	}
+	return out
+}
+
+func PrometheusToDatatable(d queryData) DataTable {
+
+	dt := DataTable{}
+
+	for _, re := range d.Result {
+		//fmt.Printf("%+v\n", re.Target)
+
+		fValuesY := make([]float64, len(re.Target))
+		fValuesX := make([]float64, len(re.Target))
+		sm := Smeta{}
+		sm.Name = re.Metric.Name
+		sm.Instance = re.Metric.Instance
+		for i, v := range re.Target {
+			Y, _ := strconv.ParseFloat(v.Value, 32)
+			X := float64(v.Time)
+			fValuesY[i] = Y
+			fValuesX[i] = X
+		}
+		sm.Min = MinFloat64(fValuesY...)
+		sm.Max = MaxFloat64(fValuesY...)
+		dt.Series = append(dt.Series, [][]float64{fValuesX, fValuesY})
+		dt.SeriesMeta = append(dt.SeriesMeta, sm)
+
+		//log.Println("Shifting data down by ", sm.Min)
+		vals := make([]float64, len(fValuesY))
+		for i, v := range fValuesY {
+			vals[i] = v - sm.Min
+		}
+
+		//log.Println("Scaling data by ", sm.Max)
+		for i, v := range vals {
+			vals[i] = v / sm.Max
+		}
+		dt.ScaledSeries = append(dt.ScaledSeries, [][]float64{fValuesX, vals})
+	}
+	return dt
 }
 
 func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
@@ -200,7 +298,7 @@ func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window 
 	nanogui.NewResize(window, window)
 	window.SetLayout(nanogui.NewGroupLayout())
 
-	nanogui.NewLabel(window, "Shell command :").SetFont("sans-bold")
+	nanogui.NewLabel(window, "Search:").SetFont("sans-bold")
 	textBox := nanogui.NewTextBox(window, "node_procs_running")
 	textBox.SetFont("japanese")
 	textBox.SetEditable(true)
@@ -232,7 +330,7 @@ func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window 
 			then := now - 15*60
 			txt := textBox.Value()
 			req := "http://admin:admin@192.168.178.22:3000/api/datasources/proxy/1/api/v1/query_range?query=" + txt + "&start=" + fmt.Sprint(then) + "&end=" + fmt.Sprint(now) + "&step=15"
-			fmt.Println(req)
+			//fmt.Println(req)
 			resp, err := http.Get(req)
 			if err != nil {
 				// handle error
@@ -240,45 +338,36 @@ func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window 
 			defer resp.Body.Close()
 			body, err := io.ReadAll(resp.Body)
 			var r response
-			fmt.Println(string(body))
+			//fmt.Println(string(body))
 			err = json.Unmarshal(body, &r)
 			if err != nil {
 				panic(err)
 			}
 
 			d := r.Data
-			re := d.Result[0].Target
+			//fmt.Printf("Data table: %+v\n", dt)
 
-			fmt.Printf("%+v\n", re)
+			dt := PrometheusToDatatable(d)
+			if len(dt.ScaledSeries) > 0 {
 
-			fValues := make([]float32, len(re))
-			for i, v := range re {
-				tmp, _ := strconv.ParseFloat(v.Value, 32)
-				fValues[i] = float32(tmp)
-			}
+				vals := dt.ScaledSeries[0][1]
+				//log.Println("Transformed data:", vals)
+				graph.SetValues(ToFloat32(vals))
+				graph.SetHeader(dt.SeriesMeta[0].Name)
+				graph.SetFooter(dt.SeriesMeta[0].Instance)
 
-			low := MinFloat32(fValues...)
+				data := string(body)
+				data = strings.Replace(data, ",", ", ", -1)
+				//textBox1.SetValue(fmt.Sprintf("%+v\n", string(body)))
+				//fmt.Printf("%+v\n", data)
 
-			for i, v := range fValues {
-				fValues[i] = v - low
-			}
+				app.MainThreadThunker <- func() {
+					ctx := screen.NVGContext()
+					//gr := ctx.CreateImageFromGoImage(0, nanogui.StripChart(dt.Series[0][1]))
+					gr := ctx.CreateImageFromGoImage(0, otherPlot(dt))
+					img.SetImage(gr)
 
-			high := MaxFloat32(fValues...)
-
-			for i, _ := range fValues {
-				fValues[i] = fValues[i] / high
-			}
-			graph.SetValues(fValues)
-			graph.SetHeader(d.Result[0].Metric.Name)
-			graph.SetFooter(d.Result[0].Metric.Instance)
-
-			data := string(body)
-			data = strings.Replace(data, ",", ", ", -1)
-			textBox1.SetValue(fmt.Sprintf("%+v\n", string(body)))
-			app.MainThreadThunker <- func() {
-				ctx := screen.NVGContext()
-				gr := ctx.CreateImageFromGoImage(0, nanogui.StripChart())
-				img.SetImage(gr)
+				}
 			}
 
 		}
@@ -422,4 +511,74 @@ func SelectedImageDemo(screen *nanogui.Screen, imageButton *nanogui.PopupButton,
 		}
 	})
 	cb.SetChecked(true)
+}
+
+const dpi = 96
+
+func otherPlot(dt DataTable) image.Image {
+	rand.Seed(int64(0))
+
+	p := plot.New()
+
+	p.Title.Text = dt.Title
+	p.X.Label.Text = dt.Xlabel
+	p.Y.Label.Text = dt.Ylabel
+
+	for serID, s := range dt.Series {
+		pts := make(plotter.XYs, len(s[0]))
+		for i, _ := range s[0] {
+			//fmt.Printf("S[0]: %+v\n", s[0])
+			pts[i].X = float64(i)
+			pts[i].Y = s[1][i]
+		}
+
+		l, err := plotter.NewLine(pts)
+		if err != nil {
+			panic(err)
+		}
+		p.Add(l)
+		p.Title.Text = dt.SeriesMeta[serID].Name
+		plotutil.AddLinePoints(p, dt.SeriesMeta[serID].Instance, l)
+	}
+	/*
+		err := plotutil.AddLinePoints(p,
+			"First", randomPoints(15),
+			"Second", randomPoints(15),
+			"Third", randomPoints(15))
+		if err != nil {
+			panic(err)
+		}
+	*/
+	// Draw the plot to an in-memory image.
+	img := image.NewRGBA(image.Rect(0, 0, 3*dpi, 3*dpi))
+	c := vgimg.NewWith(vgimg.UseImage(img))
+	p.Draw(draw.New(c))
+
+	// Save the image.
+	f, err := os.Create("test.png")
+	if err != nil {
+		panic(err)
+	}
+	if err := png.Encode(f, c.Image()); err != nil {
+		panic(err)
+	}
+	if err := f.Close(); err != nil {
+		panic(err)
+	}
+
+	return c.Image()
+}
+
+// randomPoints returns some random x, y points.
+func randomPoints(n int) plotter.XYs {
+	pts := make(plotter.XYs, n)
+	for i := range pts {
+		if i == 0 {
+			pts[i].X = rand.Float64()
+		} else {
+			pts[i].X = pts[i-1].X + rand.Float64()
+		}
+		pts[i].Y = pts[i].X + 10*rand.Float64()
+	}
+	return pts
 }

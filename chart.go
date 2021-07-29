@@ -102,30 +102,31 @@ func (d *Dumper) Plot(c chart.Chart) image.Image {
 //
 // Some sample strip charts
 //
-func StripChart() image.Image {
-	dumper := NewDumper("xstrip1", 2, 2, 400, 300)
+func StripChart(data1 []float64) image.Image {
+	dumper := NewDumper("xstrip1", 1, 1, 800, 800)
 	defer dumper.Close()
 
 	c := chart.StripChart{}
 
 	c.AddData("Sample A", data1, chart.Style{})
-	c.AddData("Sample B", data2, chart.Style{})
-	c.AddData("Sample C", data3, chart.Style{})
+	//c.AddData("Sample B", data2, chart.Style{})
+	//c.AddData("Sample C", data3, chart.Style{})
 	c.Title = "Sample Strip Chart (no Jitter)"
-	c.XRange.Label = "X - Axis"
+	c.XRange.Label = "Time"
+	c.YRange.Label = "Load"
 	c.Key.Pos = "icr"
-	dumper.Plot(&c)
-
-	c.Jitter = true
-	c.Title = "Sample Strip Chart (with Jitter)"
-	dumper.Plot(&c)
-
-	c.Key.Hide = true
-	dumper.Plot(&c)
-
-	c.Jitter = false
-	c.Title = "Sample Strip Chart (no Jitter)"
 	return dumper.Plot(&c)
+
+	//c.Jitter = true
+	//c.Title = "Sample Strip Chart (with Jitter)"
+	//dumper.Plot(&c)
+
+	//c.Key.Hide = true
+	//dumper.Plot(&c)
+
+	//c.Jitter = false
+	//c.Title = "Sample Strip Chart (no Jitter)"
+	//return dumper.Plot(&c)
 }
 
 //
