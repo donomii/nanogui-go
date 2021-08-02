@@ -27,6 +27,7 @@ func myinit(a *nanogui.Application) {
 	glfw.WindowHint(glfw.Samples, 4)
 	a.Screen = nanogui.NewScreen(1024, 768, "NanoGUI.Go Test", true, false)
 	a.MainThreadThunker = make(chan func(), 20)
+	a.Globals = map[string]string{}
 	fd := uint8(0)
 	a.Screen.NVGContext().CreateFontFromMemory("japanese", defaultFont, fd)
 

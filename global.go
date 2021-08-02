@@ -17,6 +17,16 @@ type Application struct {
 	MainThreadThunker chan func()
 	Progress          *ProgressBar
 	Shader            *GLShader
+	Globals           map[string]string
+}
+
+func (a *Application) SetGlobal(s, v string) {
+	a.Globals[s] = v
+}
+
+func (a *Application) GetGlobal(s string) string {
+	v := a.Globals[s]
+	return v
 }
 
 func Init() {
