@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/donomii/nanogui-go"
+	nanogui "../.."
 )
 
 func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
@@ -33,6 +33,12 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 	b9 := nanogui.NewButton(window, "Login")
 	b9.SetCallback(func() {
 		AuthWin(app, screen)
+		screen.PerformLayout()
+	})
+
+	b10 := nanogui.NewButton(window, "Vnc")
+	b10.SetCallback(func() {
+		VncWin(app, screen)
 		screen.PerformLayout()
 	})
 

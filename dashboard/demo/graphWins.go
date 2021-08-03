@@ -172,61 +172,6 @@ func MaxFloat64(flist ...float64) float64 {
 	return max
 }
 
-func ThreeDeeWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
-
-	window := nanogui.NewWindow(screen, "3D Window")
-
-	if WindowList == nil {
-		WindowList = []*nanogui.Window{}
-	}
-
-	WindowList = append(WindowList, window)
-
-	actor := NewActor(window)
-	actor.WinType = "ThreeDeeWin"
-
-	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
-	nextWindowId += 1
-	window.SetPosition(545, 15)
-	nanogui.NewResize(window, window)
-	window.SetLayout(nanogui.NewGroupLayout())
-	choice := nanogui.NewComboBox(window, []string{"CubeAndCircles", "Globe", "Spirals"})
-	img := nanogui.NewImageView(window)
-	img.SetPolicy(nanogui.ImageSizePolicyExpand)
-	//img.SetFixedSize(350, 350)
-	img.SetSize(350, 350)
-
-	go func() {
-		n := 0
-		for {
-			n = n + 1
-			if n > 360 {
-				n = 0
-			}
-			time.Sleep(100 * time.Millisecond)
-			var im image.Image
-			switch choice.SelectedIndex() {
-			case 0:
-				im = boxAndCircles(n)
-			case 1:
-				im = make3D(n)
-			case 2:
-				im = spiral(n)
-			default:
-				im = make3D(n)
-			}
-			app.MainThreadThunker <- func() {
-				ctx := screen.NVGContext()
-				gr := ctx.CreateImageFromGoImage(0, im)
-				img.SetImage(gr)
-			}
-
-		}
-	}()
-
-	return window
-}
-
 func ToFloat32(l []float64) []float32 {
 	out := make([]float32, len(l))
 	for i, v := range l {
@@ -292,7 +237,7 @@ func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window 
 	nanogui.NewResize(window, window)
 	window.SetLayout(nanogui.NewGroupLayout())
 
-	nanogui.NewLabel(window, "Search:").SetFont("sans-bold")
+	nanogui.NewLabel(window, "Query:").SetFont("sans-bold")
 	textBox := nanogui.NewTextBox(window, "node_procs_running")
 	textBox.SetFont("japanese")
 	textBox.SetEditable(true)
@@ -317,6 +262,7 @@ func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window 
 	img.SetPolicy(nanogui.ImageSizePolicyExpand)
 	img.SetFixedSize(300, 300)
 
+	imageCreated := false
 	go func() {
 		for {
 			time.Sleep(1 * time.Second)
@@ -363,10 +309,17 @@ func GraphWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window 
 				//fmt.Printf("%+v\n", data)
 
 				app.MainThreadThunker <- func() {
-					ctx := screen.NVGContext()
-					//gr := ctx.CreateImageFromGoImage(0, nanogui.StripChart(dt.Series[0][1]))
-					gr := ctx.CreateImageFromGoImage(0, otherPlot(dt))
-					img.SetImage(gr)
+					if !imageCreated {
+						ctx := screen.NVGContext()
+						//gr := ctx.CreateImageFromGoImage(0, nanogui.StripChart(dt.Series[0][1]))
+						gr := ctx.CreateImageFromGoImage(0, otherPlot(dt))
+						img.SetImage(gr)
+					} else {
+						ctx := screen.NVGContext()
+						//gr := ctx.CreateImageFromGoImage(0, nanogui.StripChart(dt.Series[0][1]))
+						ctx.UpdateImage(0, otherPlot(dt).(*image.RGBA).Pix)
+
+					}
 
 				}
 			}

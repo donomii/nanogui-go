@@ -5,3 +5,5 @@ doc/_build
 *.js.map
 sample1/sample1
 sample1/sample1.exe
+dashboard/dashboard
+dash
