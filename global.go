@@ -53,13 +53,19 @@ func MainLoop(app *Application) {
 	wg.Add(1)
 	go func() {
 		for mainloopActive {
-			time.Sleep(50 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 			glfw.PostEmptyEvent()
 		}
 		wg.Done()
 	}()
 	for mainloopActive {
 		haveActiveScreen := false
+		for x := len(app.MainThreadThunker); len(app.MainThreadThunker) > 0; x = x + len(app.MainThreadThunker) {
+			//fmt.Println("Processing", x, "events")
+			f := <-app.MainThreadThunker
+			f()
+			//fmt.Println(" ", x-1, "events remaining")
+		}
 		for _, screen := range nanoguiScreens {
 			if !screen.Visible() {
 				continue
@@ -67,10 +73,7 @@ func MainLoop(app *Application) {
 				screen.SetVisible(false)
 				continue
 			}
-			if len(app.MainThreadThunker) > 0 {
-				f := <-app.MainThreadThunker
-				f()
-			}
+
 			//screen.DebugPrint()
 
 			screen.PerformLayout()

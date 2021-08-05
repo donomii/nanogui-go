@@ -2,10 +2,11 @@ package nanogui
 
 import (
 	"bytes"
+	"runtime"
+
 	"github.com/goxjs/gl"
 	"github.com/shibukawa/glfw"
 	"github.com/shibukawa/nanovgo"
-	"runtime"
 )
 
 var nanoguiScreens map[*glfw.Window]*Screen = map[*glfw.Window]*Screen{}
@@ -407,11 +408,11 @@ func (s *Screen) MoveWindowToFront(window IWindow) {
 }
 
 func (s *Screen) PreeditCursorPos() (int, int, int) {
-	return s.window.GetPreeditCursorPos()
+	return 0, 0, 0
 }
 
 func (s *Screen) SetPreeditCursorPos(x, y, h int) {
-	s.window.SetPreeditCursorPos(x, y, h)
+
 }
 
 func (s *Screen) drawWidgets() {

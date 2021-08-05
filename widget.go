@@ -510,11 +510,26 @@ func (w *WidgetImplement) FocusEvent(self Widget, f bool) bool {
 
 // KeyboardEvent() handles a keyboard event (default implementation: do nothing)
 func (w *WidgetImplement) KeyboardEvent(self Widget, key glfw.Key, scanCode int, action glfw.Action, modifier glfw.ModifierKey) bool {
-	return false
+	fmt.Println("Key pressed in default handler!")
+	for _, child := range childrenReverseDepthOrder(self) {
+		//if child.Focused() {
+		//Fixme
+		child.KeyboardEvent(child, key, scanCode, action, modifier)
+		//}
+	}
+	return true
 }
 
 // KeyboardCharacterEvent() handles text input (UTF-32 format) (default implementation: do nothing)
 func (w *WidgetImplement) KeyboardCharacterEvent(self Widget, codePoint rune) bool {
+	fmt.Println("Key pressed in default handler!")
+	for _, child := range childrenReverseDepthOrder(self) {
+		//if child.Focused() {
+		//Fixme
+		child.KeyboardCharacterEvent(child, codePoint)
+		//}
+	}
+	return true
 	return false
 }
 

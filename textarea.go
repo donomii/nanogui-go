@@ -1,11 +1,13 @@
 package nanogui
 
 import (
-	"github.com/shibukawa/glfw"
-	"github.com/shibukawa/nanovgo"
 	"regexp"
 	"strconv"
+
+	"github.com/shibukawa/glfw"
+	"github.com/shibukawa/nanovgo"
 )
+
 type TextArea struct {
 	WidgetImplement
 
@@ -343,7 +345,7 @@ func (t *TextArea) PreferredSize(self Widget, ctx *nanovgo.Context) (int, int) {
 }
 
 func drawParagraph(ctx *nanovgo.Context, x, y, width, height, mx, my float32, text string) {
-	
+
 	ctx.Save()
 	defer ctx.Restore()
 
@@ -443,7 +445,6 @@ func drawParagraph(ctx *nanovgo.Context, x, y, width, height, mx, my float32, te
 	ctx.SetTextLineHeight(1.2)
 }
 
-
 func (t *TextArea) Draw(self Widget, ctx *nanovgo.Context) {
 	t.WidgetImplement.Draw(self, ctx)
 
@@ -451,7 +452,7 @@ func (t *TextArea) Draw(self Widget, ctx *nanovgo.Context) {
 	y := float32(t.WidgetPosY)
 	w := float32(t.WidgetWidth)
 	h := float32(t.WidgetHeight)
-	drawParagraph(ctx,x,y,w,h,float32(t.mousePos[0]),float32(t.mousePos[1]), t.value)
+	drawParagraph(ctx, x, y, w, h, float32(t.mousePos[0]), float32(t.mousePos[1]), t.value)
 	return
 }
 
@@ -478,7 +479,7 @@ func (t *TextArea) CopySelection() bool {
 
 func (t *TextArea) PasteFromClipboard() {
 	sc := t.FindWindow().Parent().(*Screen)
-	str, _ := sc.GLFWWindow().GetClipboardString()
+	str := sc.GLFWWindow().GetClipboardString()
 	runes := []rune(str)
 	t.valueTemp = append(t.valueTemp[:t.cursorPos], append(runes, t.valueTemp[t.cursorPos:]...)...)
 	t.cursorPos += len(runes)

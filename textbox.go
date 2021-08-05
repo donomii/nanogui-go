@@ -1,10 +1,11 @@
 package nanogui
 
 import (
-	"github.com/shibukawa/glfw"
-	"github.com/shibukawa/nanovgo"
 	"regexp"
 	"strconv"
+
+	"github.com/shibukawa/glfw"
+	"github.com/shibukawa/nanovgo"
 )
 
 type TextAlignment int
@@ -555,7 +556,7 @@ func (t *TextBox) CopySelection() bool {
 
 func (t *TextBox) PasteFromClipboard() {
 	sc := t.FindWindow().Parent().(*Screen)
-	str, _ := sc.GLFWWindow().GetClipboardString()
+	str := sc.GLFWWindow().GetClipboardString()
 	runes := []rune(str)
 	t.valueTemp = append(t.valueTemp[:t.cursorPos], append(runes, t.valueTemp[t.cursorPos:]...)...)
 	t.cursorPos += len(runes)

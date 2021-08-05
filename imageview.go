@@ -1,6 +1,9 @@
 package nanogui
 
 import (
+	"fmt"
+
+	"github.com/shibukawa/glfw"
 	"github.com/shibukawa/nanovgo"
 )
 
@@ -14,8 +17,12 @@ const (
 type ImageView struct {
 	WidgetImplement
 
-	image  int
-	policy ImageSizePolicy
+	callback       func(x, y int, button glfw.MouseButton, down bool, modifier glfw.ModifierKey)
+	callbackMotion func(x, y, relX, relY int, button int, modifier glfw.ModifierKey)
+	callbackKey    func(key glfw.Key, scanCode int, action glfw.Action, modifier glfw.ModifierKey)
+	callbackText   func(codePoint rune)
+	image          int
+	policy         ImageSizePolicy
 }
 
 func NewImageView(parent Widget, images ...int) *ImageView {
@@ -58,6 +65,54 @@ func (i *ImageView) PreferredSize(self Widget, ctx *nanovgo.Context) (int, int) 
 	}
 	w, h, _ := ctx.ImageSize(i.image)
 	return w, h
+}
+
+func (i *ImageView) SetCallback(f func(x, y int, button glfw.MouseButton, down bool, modifier glfw.ModifierKey)) {
+	i.callback = f
+}
+
+func (i *ImageView) SetMotionCallback(f func(x, y, relX, relY, button int, modifier glfw.ModifierKey)) {
+	i.callbackMotion = f
+}
+
+func (i *ImageView) MouseButtonEvent(self Widget, x, y int, button glfw.MouseButton, down bool, modifier glfw.ModifierKey) bool {
+
+	if i.callback != nil {
+		i.callback(x, y, button, down, modifier)
+	}
+	return true
+}
+
+func (i *ImageView) MouseMotionEvent(self Widget, x, y, relX, relY, button int, modifier glfw.ModifierKey) bool {
+	if i.callbackMotion != nil {
+		i.callbackMotion(x, y, relX, relY, button, modifier)
+	}
+	return true
+}
+
+func (i *ImageView) KeyboardEvent(self Widget, key glfw.Key, scanCode int, action glfw.Action, modifier glfw.ModifierKey) bool {
+	if i.callbackKey != nil {
+		i.callbackKey(key, scanCode, action, modifier)
+	}
+	return true
+}
+
+func (i *ImageView) SetKeyboardEventCallback(f func(key glfw.Key, scanCode int, action glfw.Action, modifier glfw.ModifierKey)) {
+	
+	i.callbackKey = f
+}
+
+func (i *ImageView) KeyboardCharacterEvent(self Widget, codePoint rune) bool {
+	fmt.Println("Key pressed!")
+	if i.callbackText != nil {
+		i.callbackText(codePoint)
+	}
+
+	return true
+}
+
+func (i *ImageView) SetKeyboardCharacterEventCallback(f func(codePoint rune)) {
+	i.callbackText = f
 }
 
 func (i *ImageView) Draw(self Widget, ctx *nanovgo.Context) {
