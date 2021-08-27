@@ -32,7 +32,13 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 
 	b9 := nanogui.NewButton(window, "Login")
 	b9.SetCallback(func() {
-		AuthWin(app, screen)
+		GrafanaAuth(app, screen)
+		screen.PerformLayout()
+	})
+
+	b12 := nanogui.NewButton(window, "Vnc Login")
+	b12.SetCallback(func() {
+		VncAuth(app, screen)
 		screen.PerformLayout()
 	})
 
@@ -73,8 +79,13 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
 				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
 				screen.PerformLayout()
-			case "AuthWin":
-				win := AuthWin(app, screen)
+			case "GrafanaAuth":
+				win := GrafanaAuth(app, screen)
+				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
+				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
+				screen.PerformLayout()
+			case "VncAuth":
+				win := VncAuth(app, screen)
 				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
 				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
 				screen.PerformLayout()

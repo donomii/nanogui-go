@@ -6,9 +6,25 @@ import (
 	nanogui "../.."
 )
 
-func AuthWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
+func field(window *nanogui.Window, app *nanogui.Application, data []string) {
 
-	window := nanogui.NewWindow(screen, "Login to Grafana")
+	nanogui.NewLabel(window, data[0]).SetFont("sans-bold")
+	textBox := nanogui.NewTextBox(window, app.GetGlobal(data[1]))
+	textBox.SetEditable(true)
+	textBox.SetFixedSize(100, 20)
+	//textBox.SetUnits("GiB")
+	textBox.SetDefaultValue(data[2])
+	textBox.SetFontSize(16)
+	textBox.SetCallback(func(s string) bool {
+		app.SetGlobal(data[1], s)
+		return true
+	})
+
+}
+
+func AuthWin(app *nanogui.Application, screen *nanogui.Screen, title, tipe string, fields [][]string) *nanogui.Window {
+
+	window := nanogui.NewWindow(screen, title)
 
 	if WindowList == nil {
 		WindowList = []*nanogui.Window{}
@@ -17,7 +33,7 @@ func AuthWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 	WindowList = append(WindowList, window)
 
 	actor := NewActor(window)
-	actor.WinType = "AuthWin"
+	actor.WinType = tipe
 
 	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
 	nextWindowId += 1
@@ -28,60 +44,19 @@ func AuthWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 	layout.SetColSpacing(10)
 	window.SetLayout(layout)
 
-	{
-		nanogui.NewLabel(window, "Server :").SetFont("sans-bold")
-		textBox := nanogui.NewTextBox(window, app.GetGlobal("grafana-server"))
-		textBox.SetFont("japanese")
-		textBox.SetEditable(true)
-		textBox.SetFixedSize(100, 20)
-		textBox.SetDefaultValue("0.0")
-		textBox.SetFontSize(16)
-		textBox.SetCallback(func(s string) bool {
-			app.SetGlobal("grafana-server", s)
-			return true
-		})
-	}
-	{
-		nanogui.NewLabel(window, "Username :").SetFont("sans-bold")
-		textBox := nanogui.NewTextBox(window, app.GetGlobal("grafana-username"))
-		textBox.SetEditable(true)
-		textBox.SetFixedSize(100, 20)
-		//textBox.SetUnits("GiB")
-		textBox.SetDefaultValue("0.0")
-		textBox.SetFontSize(16)
-		textBox.SetCallback(func(s string) bool {
-			app.SetGlobal("grafana-username", s)
-			return true
-		})
-		//textBox.SetFormat(`^[-]?[0-9]*\.?[0-9]+$`)
-	}
-	{
-		nanogui.NewLabel(window, "Password :").SetFont("sans-bold")
-		textBox := nanogui.NewTextBox(window, app.GetGlobal("grafana-password"))
-		textBox.SetEditable(true)
-		textBox.SetFixedSize(100, 20)
-		//textBox.SetUnits("MHz")
-		textBox.SetDefaultValue("0.0")
-		textBox.SetFontSize(16)
-		textBox.SetCallback(func(s string) bool {
-			app.SetGlobal("grafana-password", s)
-			return true
-		})
-		//textBox.SetFormat(`^[1-9][0-9]*$`)
-	}
-	{
-		nanogui.NewLabel(window, "Port :").SetFont("sans-bold")
-		textBox := nanogui.NewTextBox(window, app.GetGlobal("grafana-port"))
-		textBox.SetEditable(true)
-		textBox.SetFixedSize(100, 20)
-		//textBox.SetUnits("MHz")
-		textBox.SetDefaultValue("0.0")
-		textBox.SetFontSize(16)
-		textBox.SetCallback(func(s string) bool {
-			app.SetGlobal("grafana-port", s)
-			return true
-		})
-		//textBox.SetFormat(`^[1-9][0-9]*$`)
+	for _, f := range fields {
+		field(window, app, f)
 	}
 	return window
 }
+
+func GrafanaAuth(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
+	return AuthWin(app, screen, "Login to Grafana", "GrafanaAuth", [][]string{
+		[]string{"Server :", "grafana-server", "localhost"},
+		[]string{"Username :", "grafana-username", "admin"},
+		[]string{"Password :", "grafana-password", "admin"},
+		[]string{"Port :", "grafana-port", "3000"},
+	})
+}
+
+
