@@ -2,6 +2,8 @@ package demo
 
 import (
 	"errors"
+	"image"
+	"image/jpeg"
 	"os/signal"
 	"syscall"
 
@@ -83,13 +85,14 @@ func queueWork(p chan func(), f func()) {
 	}()
 }
 
+var mjpeg = false
+
 func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView, window *nanogui.Window) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered in doVnc", r)
 		}
 	}()
-	//runtime.GOMAXPROCS(40)
 
 	// Establish TCP connection to VNC server.
 	nc, err := net.DialTimeout("tcp", server, 5*time.Second)
@@ -134,6 +137,49 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView, wind
 	screenImage := cc.Canvas
 	if err != nil {
 		logger.Fatalf("Error negotiating connection to VNC host. %v", err)
+	}
+
+	//MJPEG server
+	if mjpeg {
+		go func() {
+			for {
+				servAddr := "192.168.178.39:1001"
+				tcpAddr, err := net.ResolveTCPAddr("tcp", servAddr)
+				if err != nil {
+					println("ResolveTCPAddr failed:", err.Error())
+
+				} else {
+
+					conn, err := net.DialTCP("tcp", nil, tcpAddr)
+					if err != nil {
+						println("Dial failed:", err.Error())
+
+					} else {
+
+						for err == nil {
+							time.Sleep(50 * time.Millisecond)
+							var o image.Image
+							o, err = jpeg.Decode(conn)
+
+							if err == nil {
+								println("read image")
+								app.MainThreadThunker <- func() {
+
+									ctx := app.Screen.NVGContext()
+									gr := ctx.CreateImageFromGoImage(0, o)
+									img.SetImage(gr)
+									log.Println("Updated image")
+
+								}
+							} else {
+								log.Printf("Received corrupted jpeg: %v", err)
+							}
+						}
+						conn.Close()
+					}
+				}
+			}
+		}()
 	}
 
 	counter := 0
@@ -185,18 +231,20 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView, wind
 		}
 	}()
 
-	go func() {
-		for {
+	if !mjpeg {
+		go func() {
+			for {
 
-			reqMsg1 := vnc.FramebufferUpdateRequest{Inc: 1, X: 0, Y: 0, Width: cc.Width(), Height: cc.Height()}
-			queueWork(serverOutPipe, func() {
-				//cc.ResetAllEncodings()
-				reqMsg1.Write(cc)
-			})
-			time.Sleep(100 * time.Millisecond)
+				reqMsg1 := vnc.FramebufferUpdateRequest{Inc: 1, X: 0, Y: 0, Width: cc.Width(), Height: cc.Height()}
+				queueWork(serverOutPipe, func() {
+					//cc.ResetAllEncodings()
+					reqMsg1.Write(cc)
+				})
+				time.Sleep(100 * time.Millisecond)
 
-		}
-	}()
+			}
+		}()
+	}
 
 	reqMsg := vnc.FramebufferUpdateRequest{Inc: 0, X: 0, Y: 0, Width: cc.Width(), Height: cc.Height()}
 	//cc.ResetAllEncodings()
@@ -204,9 +252,12 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView, wind
 
 	img.SetCallback(func(x, y int, button glfw.MouseButton, down bool, modifier glfw.ModifierKey) {
 		if down {
-			imw, imh := img.Size()
+			imw, _ := img.Size()
+
+			aspect := float64(cc.Width()) / float64(cc.Height())
+			asHeight := 1.0 / aspect * float64(imw)
 			rX := int(x-img.WidgetPosX) * int(cc.Width()) / int(imw)
-			rY := int(y-img.WidgetPosY) * int(imh) / int(imh)
+			rY := int(y-img.WidgetPosY) * int(cc.Height()) / int(asHeight)
 			b := uint8(button)
 			switch button {
 			case 2:
@@ -239,7 +290,7 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView, wind
 
 		aspect := float64(cc.Width()) / float64(cc.Height())
 		asHeight := 1.0 / aspect * float64(imw)
-		fmt.Printf("Image size: %v,%v\n", imw, asHeight)
+		//fmt.Printf("Image size: %v,%v\n", imw, asHeight)
 		rX := int(x-img.WidgetPosX) * int(cc.Width()) / int(imw)
 		rY := int(y-img.WidgetPosY) * int(cc.Height()) / int(asHeight)
 		//fmt.Println("Remote scree ", cc.Width(), ",", cc.Height())
@@ -257,7 +308,7 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView, wind
 		case 36:
 			out = vnc.Return
 		case 51:
-			out = vnc.Delete
+			out = vnc.BackSpace
 		case 53:
 			out = vnc.Escape
 		case 60:
@@ -266,6 +317,22 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView, wind
 			out = vnc.ShiftLeft
 		case 57:
 			out = vnc.ShiftLock
+		case 59:
+			out = vnc.ControlLeft
+		case 55:
+			out = vnc.ControlLeft
+		case 58:
+			out = vnc.AltLeft
+		case 48:
+			out = vnc.Tab
+		case 123:
+			out = vnc.Left
+		case 124:
+			out = vnc.Right
+		case 126:
+			out = vnc.Up
+		case 125:
+			out = vnc.Down
 		}
 
 		if out == vnc.Space {
