@@ -33,13 +33,7 @@ func ButtonDemo(screen *nanogui.Screen) {
 		fmt.Println("pushed!")
 	})
 
-	nanogui.NewLabel(window, "Toggle button").SetFont("sans-bold")
-	b3 := nanogui.NewButton(window, "Toggle me")
-	b3.SetFlags(nanogui.ToggleButtonType)
-	b3.SetChangeCallback(func(state bool) {
-		fmt.Println("Toggle button state:", state)
-	})
-
+	
 	nanogui.NewLabel(window, "Radio buttons").SetFont("sans-bold")
 	b4 := nanogui.NewButton(window, "Radio button 1")
 	b4.SetFlags(nanogui.RadioButtonType)
@@ -406,7 +400,7 @@ func SelectedImageDemo(screen *nanogui.Screen, imageButton *nanogui.PopupButton,
 	img := nanogui.NewImageView(window)
 	img.SetPolicy(nanogui.ImageSizePolicyExpand)
 	img.SetFixedSize(300, 300)
-	img.SetImage(imagePanel.Images()[0].ImageID)
+	//img.SetImage(imagePanel.Images()[0].ImageID)
 
 	imagePanel.SetCallback(func(index int) {
 		img.SetImage(imagePanel.Images()[index].ImageID)
