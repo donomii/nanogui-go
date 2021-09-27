@@ -2,8 +2,10 @@ package demo
 
 import (
 	"encoding/json"
+	"os"
+	"github.com/donomii/goof"
 	"io/ioutil"
-
+	"github.com/emersion/go-autostart"
 	nanogui "../.."
 )
 
@@ -12,17 +14,6 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 
 	window.SetPosition(545, 15)
 	window.SetLayout(nanogui.NewGroupLayout())
-	b4 := nanogui.NewButton(window, "Shell Monitor")
-	b4.SetCallback(func() {
-		ViewWin(screen, "ls")
-		screen.PerformLayout()
-	})
-
-	b7 := nanogui.NewButton(window, "Graph Window")
-	b7.SetCallback(func() {
-		GraphWin(app, screen)
-		screen.PerformLayout()
-	})
 
 	b8 := nanogui.NewButton(window, "3D Window")
 	b8.SetCallback(func() {
@@ -30,23 +21,36 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 		screen.PerformLayout()
 	})
 
-	b9 := nanogui.NewButton(window, "Login")
+	b9 := nanogui.NewButton(window, "Run at Startup")
+	ExePath,_:=os.Executable()
 	b9.SetCallback(func() {
-		GrafanaAuth(app, screen)
-		screen.PerformLayout()
+		app := &autostart.App{
+			Name:        "NewFS",
+			DisplayName: "NewFS",
+			Exec:        []string{ExePath},
+		}
+		app.Enable()
+		goof.WriteMacAgentStart("com.praeceptamachinae.vort.app")
 	})
 
-	b12 := nanogui.NewButton(window, "Vnc Login")
+	b12 := nanogui.NewButton(window, "Login")
 	b12.SetCallback(func() {
-		VncAuth(app, screen)
+		NFSAuth(app, screen)
 		screen.PerformLayout()
 	})
 
-	b13 := nanogui.NewButton(window, "Local Network")
+	b13 := nanogui.NewButton(window, "Remote Drives")
 	b13.SetCallback(func() {
 		PClientWin(app, screen)
 		screen.PerformLayout()
 	})
+
+	b16 := nanogui.NewButton(window, "Remote Drives")
+	b16.SetCallback(func() {
+		NFSLocalRepoWin(app, screen)
+		screen.PerformLayout()
+	})
+
 
 
 	b5 := nanogui.NewButton(window, "Save")
@@ -70,28 +74,15 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 				win := ViewWin(screen, set.Serial)
 				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
 				screen.PerformLayout()
-			case "Local Network":
+			case "File Share":
 				win := PClientWin(app, screen)
 				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
 				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
 				screen.PerformLayout()
-			case "GraphWin":
-				win := GraphWin(app, screen)
-				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
-				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
-				screen.PerformLayout()
+			case "Run at Startup":
+				goof.WriteMacAgentStart("com.praeceptamachinae.vort.app")
 			case "ThreeDeeWin":
 				win := ThreeDeeWin(app, screen)
-				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
-				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
-				screen.PerformLayout()
-			case "GrafanaAuth":
-				win := GrafanaAuth(app, screen)
-				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
-				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
-				screen.PerformLayout()
-			case "VncAuth":
-				win := VncAuth(app, screen)
 				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
 				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
 				screen.PerformLayout()

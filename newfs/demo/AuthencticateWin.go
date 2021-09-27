@@ -2,7 +2,7 @@ package demo
 
 import (
 	"fmt"
-
+	"github.com/shibukawa/nanovgo"
 	nanogui "../.."
 )
 
@@ -22,7 +22,7 @@ func field(window *nanogui.Window, app *nanogui.Application, data []string) {
 
 }
 
-func AuthWin(app *nanogui.Application, screen *nanogui.Screen, title, tipe string, fields [][]string) *nanogui.Window {
+func AuthWin(app *nanogui.Application, screen *nanogui.Screen, title, tipe string, fields [][]string, testFunc func()bool,connectFunc func()bool) *nanogui.Window {
 
 	window := nanogui.NewWindow(screen, title)
 
@@ -47,16 +47,28 @@ func AuthWin(app *nanogui.Application, screen *nanogui.Screen, title, tipe strin
 	for _, f := range fields {
 		field(window, app, f)
 	}
+
+	b4 := nanogui.NewButton(window, "Test Connection")
+	b4.SetCallback(func() {
+		if testFunc(){
+			b4.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
+		} else {
+			b4.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
+		 }
+	})
+
+	
+	b5 := nanogui.NewButton(window, "Connect")
+	b5.SetCallback(func() {
+		b5.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
+		if connectFunc(){
+			b5.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
+		} else {
+			b5.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
+		 }
+	})
 	return window
 }
 
-func GrafanaAuth(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
-	return AuthWin(app, screen, "Login to Grafana", "GrafanaAuth", [][]string{
-		[]string{"Server :", "grafana-server", "localhost"},
-		[]string{"Username :", "grafana-username", "admin"},
-		[]string{"Password :", "grafana-password", "admin"},
-		[]string{"Port :", "grafana-port", "3000"},
-	})
-}
 
 

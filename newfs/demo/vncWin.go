@@ -18,18 +18,81 @@ import (
 	"os/user"
 	"os"
 	"io/ioutil"
-
+"net/http"
 
 )
 
-func VncAuth(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
-	return AuthWin(app, screen, "Login to Vnc", "VncAuth", [][]string{
-		[]string{"Server :", "vnc-server", "localhost"},
-		[]string{"Password :", "vnc-password", "aaaaaa"},
-		[]string{"Port :", "vnc-port", "5900"},
-	})
+func NFSAuth(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
+	return AuthWin(app, screen, "Login to NFS", "NFSAuth", [][]string{
+		[]string{"Server :", "nfs-server", "http://192.168.178.22:8000/"},
+		[]string{"Token :", "nfs-token", "12394348765432782912349283435"},
+		[]string{"Port :", "nfs-port", "8000"},
+	},func()bool{
+		
+		url:=app.GetGlobal("nfs-server")
+		resp, err := http.Get(url+"authenticate")
+		if err != nil {
+			log.Printf("Get")
+			return false
+		}
+		if resp.StatusCode <300 {
+			return true
+		}
+		return false},
+		func()bool{
+		
+			url:=app.GetGlobal("nfs-server")
+			resp, err := http.Get(url+"authenticate")
+			if err != nil {
+				log.Printf("Get failed %v", err)
+				return false
+			}
+			if resp.StatusCode >299 {
+				log.Printf("Get failed with code %v", resp.StatusCode)
+				return false
+			}
+			mountUrl(url)
+		return false
+		},
+	)
 }
 
+
+func NFSLocalRepoWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
+	
+	window := nanogui.NewWindow(screen, "Connect Localnet Repository")
+
+	if WindowList == nil {
+		WindowList = []*nanogui.Window{}
+	}
+
+	WindowList = append(WindowList, window)
+
+	actor := NewActor(window)
+	actor.WinType = "LocalMounterWin"
+
+	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
+	nextWindowId += 1
+
+	window.SetPosition(445, 358)
+	layout := nanogui.NewGridLayout(nanogui.Horizontal, 2, nanogui.Middle, 15, 5)
+	layout.SetColAlignment(nanogui.Maximum, nanogui.Fill)
+	layout.SetColSpacing(10)
+	window.SetLayout(layout)
+
+
+	b5 := nanogui.NewButton(window, "Connect Local")
+	b5.SetCallback(func() {
+		b5.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
+		if mountLocal(false,false){
+			b5.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
+		} else {
+			b5.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
+		 }
+	})
+		
+	return window
+}
 
 
 
@@ -57,6 +120,30 @@ func loadRepoDetails(path string) hashare.ClientConfig {
 
 	out, _ := hashare.LoadClientConfig(path)
 	return out
+}
+
+func mountUrl(url string) {
+	log.Println("Starting ", url)
+	exePath := "vort-fuse.exe"
+	if !goof.Exists(exePath) {
+		var err error
+		exePath, err = exec.LookPath("vort-fuse")
+		if err != nil {
+			dir, _ := osext.ExecutableFolder()
+			exePath = dir + "/vort-fuse"
+		}
+	}
+	cmd := []string{}
+	MountPoint := nextDrive()
+		cmd = []string{exePath, "--url", url, "--mount", MountPoint}
+
+	go func() {
+		time.Sleep(5 * time.Second)
+		//TODO have vort-fuse write a connected status then pop the window asap
+		goof.QC([]string{`explorer`, MountPoint + "\\"})
+	}()
+	goof.QCI(cmd)
+
 }
 
 func mountRepo(config string, debug, trace bool) {
@@ -107,7 +194,7 @@ func mountRepo(config string, debug, trace bool) {
 
 
 
-func mountLocal( debug, trace bool) {
+func mountLocal( debug, trace bool)bool {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("Unable to mount local share because %v", r)
@@ -127,7 +214,7 @@ func mountLocal( debug, trace bool) {
 	cmd := []string{exePath}
 	goof.QCI(cmd)
 	time.Sleep(1 * time.Second)
-
+return false
 
 }
 
@@ -197,6 +284,10 @@ func PClientWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 
 	window.SetLayout(nanogui.NewGroupLayout())
 
+	b3 := nanogui.NewButton(window, "Stop All")
+
+	statuses:= []*nanogui.Label{}
+
 
 	repositories := loadUserConfig()
 	for _, k := range repositories {
@@ -208,7 +299,9 @@ func PClientWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 		name := repoDetail.DisplayName
 	
 
-	nanogui.NewLabel(window, "Status:").SetFont("sans-bold")
+	st:=nanogui.NewLabel(window, "Status:")
+	st.SetFont("sans-bold")
+	statuses=append(statuses, st)
 	status:= nanogui.NewLabel(window, "Disconnected")//.SetFont("sans-bold")
 	b2 := nanogui.NewButton(window, "Start "+name)
 	b2.SetBackgroundColor(nanovgo.RGBA(0, 0, 255, 25))
@@ -223,14 +316,20 @@ func PClientWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 		
 	})
 
-	b3 := nanogui.NewButton(window, "Stop"+name)
+
+	}
+
 	b3.SetBackgroundColor(nanovgo.RGBA(0, 0, 255, 25))
 	b3.SetIcon(nanogui.IconRocket)
 	b3.SetCallback(func() {
-		status.SetCaption("Disconnected")
+		//status.SetCaption("Disconnected")
 		ioutil.WriteFile(controlDir+"shutdown", []byte(" "), 0600)
+		for _,s := range statuses{
+			s.SetCaption("Disconnected")
+		}
 	})
-	}
+
+
 	nanogui.NewResize(window, window)
 	img := nanogui.NewImageView(window)
 	img.SetPolicy(nanogui.ImageSizePolicyExpand)
