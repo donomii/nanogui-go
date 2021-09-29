@@ -23,6 +23,15 @@
 		},
 		{
 			"path": "../../racketProgs/queue"
+		},
+		{
+			"path": "../go/src/github.com/donomii/vort-fuse"
+		},
+		{
+			"path": "../go/src/github.com/donomii/hashare/config"
+		},
+		{
+			"path": "../go/src/github.com/donomii/hashare"
 		}
 	]
 }

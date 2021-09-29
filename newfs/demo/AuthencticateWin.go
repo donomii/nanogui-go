@@ -9,7 +9,7 @@ import (
 func field(window *nanogui.Window, app *nanogui.Application, data []string) {
 
 	nanogui.NewLabel(window, data[0]).SetFont("sans-bold")
-	textBox := nanogui.NewTextBox(window, app.GetGlobal(data[1]))
+	textBox := nanogui.NewTextBox(window, app.GetGlobal(data[2]))
 	textBox.SetEditable(true)
 	textBox.SetFixedSize(100, 20)
 	//textBox.SetUnits("GiB")
@@ -19,8 +19,11 @@ func field(window *nanogui.Window, app *nanogui.Application, data []string) {
 		app.SetGlobal(data[1], s)
 		return true
 	})
+	textBox.FocusEvent(textBox, true)
+	textBox.FocusEvent(textBox, false)
 
 }
+
 
 func AuthWin(app *nanogui.Application, screen *nanogui.Screen, title, tipe string, fields [][]string, testFunc func()bool,connectFunc func()bool) *nanogui.Window {
 

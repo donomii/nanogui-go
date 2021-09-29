@@ -31,7 +31,7 @@ func myinit(a *nanogui.Application) {
 	fd := uint8(0)
 	a.Screen.NVGContext().CreateFontFromMemory("japanese", defaultFont, fd)
 
-	demo.ControlPanel(app, a.Screen)
+	demo.AccountWin(app, a.Screen)
 
 	a.Screen.PerformLayout()
 	a.Screen.DebugPrint()

@@ -57,6 +57,63 @@ func NFSAuth(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 	)
 }
 
+func TestGet(url string)bool{
+	resp, err := http.Get(url+"authenticate")
+	if err != nil {
+		log.Printf("Get failed:")
+		log.Println(err)
+		return false
+	}
+	if resp.StatusCode <300 {
+		return true
+	}
+	log.Println(resp)
+	return false}
+
+func AccountWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
+
+	window := nanogui.NewWindow(screen, "Login")
+
+	if WindowList == nil {
+		WindowList = []*nanogui.Window{}
+	}
+
+	WindowList = append(WindowList, window)
+
+	
+	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
+	nextWindowId += 1
+
+	window.SetPosition(445, 358)
+	layout := nanogui.NewGridLayout(nanogui.Horizontal, 2, nanogui.Middle, 15, 5)
+	layout.SetColAlignment(nanogui.Maximum, nanogui.Fill)
+	layout.SetColSpacing(10)
+	window.SetLayout(layout)
+
+	
+		field(window, app, []string{"Account URL :", "earthtide-account", "https://entirety.praeceptamachinae.com/"})
+	
+
+	b4 := nanogui.NewButton(window, "Connect")
+	b4.SetCallback(func() {
+		if TestGet(app.GetGlobal("earthtide-account")){
+			b4.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
+		} else {
+			b4.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
+		 }
+	})
+
+	
+	b5 := nanogui.NewButton(window, "Menu")
+	b5.SetCallback(func() {
+		ControlPanel(app, screen)
+		screen.PerformLayout()	
+
+	})
+	return window
+}
+
+
 
 func NFSLocalRepoWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 	
@@ -330,11 +387,6 @@ func PClientWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 	})
 
 
-	nanogui.NewResize(window, window)
-	img := nanogui.NewImageView(window)
-	img.SetPolicy(nanogui.ImageSizePolicyExpand)
-	//img.SetFixedSize(800, 600)
-	//img.SetSize(800, 600)
 	nanogui.NewResize(window, window)
 
 

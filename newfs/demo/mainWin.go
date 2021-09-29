@@ -10,7 +10,7 @@ import (
 )
 
 func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
-	window := nanogui.NewWindow(screen, "Control Panel")
+	window := nanogui.NewWindow(screen, "INFS")
 
 	window.SetPosition(545, 15)
 	window.SetLayout(nanogui.NewGroupLayout())
@@ -33,7 +33,7 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 		goof.WriteMacAgentStart("com.praeceptamachinae.vort.app")
 	})
 
-	b12 := nanogui.NewButton(window, "Login")
+	b12 := nanogui.NewButton(window, "Manual Connect")
 	b12.SetCallback(func() {
 		NFSAuth(app, screen)
 		screen.PerformLayout()
@@ -45,7 +45,7 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 		screen.PerformLayout()
 	})
 
-	b16 := nanogui.NewButton(window, "Remote Drives")
+	b16 := nanogui.NewButton(window, "Local Network Drives")
 	b16.SetCallback(func() {
 		NFSLocalRepoWin(app, screen)
 		screen.PerformLayout()
@@ -93,6 +93,4 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 
 	})
 
-	nanogui.NewLabel(window, "Color picker").SetFont("sans-bold")
-	nanogui.NewColorPicker(window)
 }
