@@ -2,6 +2,36 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "../wasm-rotating-cube"
+		},
+		{
+			"path": "../PocketBonsai/pocketBonsai"
+		},
+		{
+			"path": "../authentigate"
+		},
+		{
+			"path": "../quester"
+		},
+		{
+			"path": "../pmoo"
+		},
+		{
+			"path": "../../racketProgs/pmoo"
+		},
+		{
+			"path": "../../racketProgs/queue"
+		},
+		{
+			"path": "../go/src/github.com/donomii/vort-fuse"
+		},
+		{
+			"path": "../go/src/github.com/donomii/hashare/config"
+		},
+		{
+			"path": "../go/src/github.com/donomii/hashare"
 		}
 	]
 }

@@ -2,6 +2,8 @@ package demo
 
 import (
 	"errors"
+	"image"
+	"image/jpeg"
 	"os/signal"
 	"syscall"
 
@@ -12,7 +14,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"runtime"
 	"time"
 
 	"github.com/amitbet/vnc2video"
@@ -22,9 +23,19 @@ import (
 	"github.com/shibukawa/glfw"
 )
 
+func VncAuth(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
+	return AuthWin(app, screen, "Login to Vnc", "VncAuth", [][]string{
+		[]string{"Server :", "vnc-server", "localhost"},
+		[]string{"Password :", "vnc-password", "aaaaaa"},
+		[]string{"Port :", "vnc-port", "5900"},
+	})
+}
+
 func VncWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 
 	window := nanogui.NewWindow(screen, "Vnc Window")
+	window.SetFixedSize(100, 100)
+	window.SetSize(200, 200)
 
 	if WindowList == nil {
 		WindowList = []*nanogui.Window{}
@@ -37,17 +48,21 @@ func VncWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 
 	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
 	nextWindowId += 1
-	window.SetPosition(545, 15)
+	window.SetPosition(0, 0)
 
-	window.SetLayout(nanogui.NewGroupLayout())
-
+	window.SetLayout(nanogui.NewStrictLayout())
+	nanogui.NewResize(window, window)
 	img := nanogui.NewImageView(window)
 	img.SetPolicy(nanogui.ImageSizePolicyExpand)
-	img.SetFixedSize(800, 600)
-	img.SetSize(800, 600)
+	//img.SetFixedSize(800, 600)
+	//img.SetSize(800, 600)
 	nanogui.NewResize(window, window)
 
-	go doVnc("192.168.178.39:5900", app, img)
+	go func() {
+		for {
+			doVnc(app.GetGlobal("vnc-server")+":"+app.GetGlobal("vnc-port"), app, img, window)
+		}
+	}()
 	return window
 
 }
@@ -70,8 +85,14 @@ func queueWork(p chan func(), f func()) {
 	}()
 }
 
-func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView) {
-	runtime.GOMAXPROCS(40)
+var mjpeg = false
+
+func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView, window *nanogui.Window) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in doVnc", r)
+		}
+	}()
 
 	// Establish TCP connection to VNC server.
 	nc, err := net.DialTimeout("tcp", server, 5*time.Second)
@@ -116,6 +137,49 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView) {
 	screenImage := cc.Canvas
 	if err != nil {
 		logger.Fatalf("Error negotiating connection to VNC host. %v", err)
+	}
+
+	//MJPEG server
+	if mjpeg {
+		go func() {
+			for {
+				servAddr := "192.168.178.39:1001"
+				tcpAddr, err := net.ResolveTCPAddr("tcp", servAddr)
+				if err != nil {
+					println("ResolveTCPAddr failed:", err.Error())
+
+				} else {
+
+					conn, err := net.DialTCP("tcp", nil, tcpAddr)
+					if err != nil {
+						println("Dial failed:", err.Error())
+
+					} else {
+
+						for err == nil {
+							time.Sleep(50 * time.Millisecond)
+							var o image.Image
+							o, err = jpeg.Decode(conn)
+
+							if err == nil {
+								println("read image")
+								app.MainThreadThunker <- func() {
+
+									ctx := app.Screen.NVGContext()
+									gr := ctx.CreateImageFromGoImage(0, o)
+									img.SetImage(gr)
+									log.Println("Updated image")
+
+								}
+							} else {
+								log.Printf("Received corrupted jpeg: %v", err)
+							}
+						}
+						conn.Close()
+					}
+				}
+			}
+		}()
 	}
 
 	counter := 0
@@ -167,18 +231,20 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView) {
 		}
 	}()
 
-	go func() {
-		for {
+	if !mjpeg {
+		go func() {
+			for {
 
-			reqMsg1 := vnc.FramebufferUpdateRequest{Inc: 1, X: 0, Y: 0, Width: cc.Width(), Height: cc.Height()}
-			queueWork(serverOutPipe, func() {
-				//cc.ResetAllEncodings()
-				reqMsg1.Write(cc)
-			})
-			time.Sleep(100 * time.Millisecond)
+				reqMsg1 := vnc.FramebufferUpdateRequest{Inc: 1, X: 0, Y: 0, Width: cc.Width(), Height: cc.Height()}
+				queueWork(serverOutPipe, func() {
+					//cc.ResetAllEncodings()
+					reqMsg1.Write(cc)
+				})
+				time.Sleep(100 * time.Millisecond)
 
-		}
-	}()
+			}
+		}()
+	}
 
 	reqMsg := vnc.FramebufferUpdateRequest{Inc: 0, X: 0, Y: 0, Width: cc.Width(), Height: cc.Height()}
 	//cc.ResetAllEncodings()
@@ -186,8 +252,12 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView) {
 
 	img.SetCallback(func(x, y int, button glfw.MouseButton, down bool, modifier glfw.ModifierKey) {
 		if down {
-			rX := int(x-img.WidgetPosX) * int(cc.Width()) / 800
-			rY := int(y-img.WidgetPosY) * int(cc.Height()) / 450
+			imw, _ := img.Size()
+
+			aspect := float64(cc.Width()) / float64(cc.Height())
+			asHeight := 1.0 / aspect * float64(imw)
+			rX := int(x-img.WidgetPosX) * int(cc.Width()) / int(imw)
+			rY := int(y-img.WidgetPosY) * int(cc.Height()) / int(asHeight)
 			b := uint8(button)
 			switch button {
 			case 2:
@@ -216,8 +286,13 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView) {
 	})
 
 	img.SetMotionCallback(func(x, y, relX, relY int, button int, modifier glfw.ModifierKey) {
-		rX := int(x-img.WidgetPosX) * int(cc.Width()) / 800
-		rY := int(y-img.WidgetPosY) * int(cc.Height()) / 450
+		imw, _ := img.Size()
+
+		aspect := float64(cc.Width()) / float64(cc.Height())
+		asHeight := 1.0 / aspect * float64(imw)
+		//fmt.Printf("Image size: %v,%v\n", imw, asHeight)
+		rX := int(x-img.WidgetPosX) * int(cc.Width()) / int(imw)
+		rY := int(y-img.WidgetPosY) * int(cc.Height()) / int(asHeight)
 		//fmt.Println("Remote scree ", cc.Width(), ",", cc.Height())
 		//fmt.Println("Callback motion at ", rX, ",", rY)
 		reqMsg := vnc.PointerEvent{Mask: uint8(button), X: uint16(rX), Y: uint16(rY)}
@@ -233,7 +308,7 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView) {
 		case 36:
 			out = vnc.Return
 		case 51:
-			out = vnc.Delete
+			out = vnc.BackSpace
 		case 53:
 			out = vnc.Escape
 		case 60:
@@ -242,6 +317,22 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView) {
 			out = vnc.ShiftLeft
 		case 57:
 			out = vnc.ShiftLock
+		case 59:
+			out = vnc.ControlLeft
+		case 55:
+			out = vnc.ControlLeft
+		case 58:
+			out = vnc.AltLeft
+		case 48:
+			out = vnc.Tab
+		case 123:
+			out = vnc.Left
+		case 124:
+			out = vnc.Right
+		case 126:
+			out = vnc.Up
+		case 125:
+			out = vnc.Down
 		}
 
 		if out == vnc.Space {
@@ -300,6 +391,7 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView) {
 				result = effect.Dilate(result, 1)
 				result = adjust.Contrast(result, 2.0)
 				*/
+				//img.SetFixedSize(ww, wh)
 				p, w, h := glim.GFormatToImage(screenImage.Image, nil, 0, 0)
 				p = glim.ForceAlpha(p, 255)
 				p = glim.FlipUp(w, h, p)
@@ -331,7 +423,6 @@ func doVnc(server string, app *nanogui.Application, img *nanogui.ImageView) {
 				app.MainThreadThunker <- func() {
 
 					ctx := app.Screen.NVGContext()
-					//gr := ctx.CreateImageFromGoImage(0, nanogui.StripChart(dt.Series[0][1]))
 					gr := ctx.CreateImageFromGoImage(0, o)
 					img.SetImage(gr)
 					//log.Println("Updated image")

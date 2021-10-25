@@ -2,6 +2,7 @@ package nanogui
 
 import (
 	"fmt"
+
 	"github.com/shibukawa/nanovgo"
 )
 
@@ -994,4 +995,183 @@ func (a *AdvancedGridLayout) computeLayout(widget Widget, ctx *nanovgo.Context) 
 
 func (a *AdvancedGridLayout) String() string {
 	return fmt.Sprintf("AdvancedGridLayout[%d-%d]", len(a.cols), len(a.rows))
+}
+
+// Special layout for widgets grouped by labels
+//
+// This widget resembles a box layout in that it arranges a set of widgets
+// vertically. All widgets are indented on the horizontal axis except for
+// Label widgets, which are not indented.
+//
+// This creates a pleasing layout where a number of widgets are grouped
+// under some high-level heading.
+type StrictLayout struct {
+	margin       int
+	spacing      int
+	groupIndent  int
+	groupSpacing int
+}
+
+func NewStrictLayout(setting ...int) Layout {
+	margin := -1
+	spacing := -1
+	groupIndent := -1
+	groupSpacing := -1
+	switch len(setting) {
+	case 0:
+	case 1:
+		margin = setting[0]
+	case 2:
+		margin = setting[0]
+		spacing = setting[1]
+	case 3:
+		margin = setting[0]
+		spacing = setting[1]
+		groupIndent = setting[2]
+	case 4:
+		margin = setting[0]
+		spacing = setting[1]
+		groupIndent = setting[2]
+		groupSpacing = setting[3]
+	default:
+		panic("NewStrictLayout can accept extra parameter upto 4 (margin, spacing, groupIndent, groupSpacing).")
+	}
+
+	if margin < 0 {
+		margin = 15
+	}
+	if spacing < 0 {
+		spacing = 6
+	}
+	if groupIndent < 0 {
+		groupIndent = 20
+	}
+	if groupSpacing < 0 {
+		groupSpacing = 14
+	}
+	return &StrictLayout{
+		margin:       margin,
+		spacing:      spacing,
+		groupIndent:  groupIndent,
+		groupSpacing: groupSpacing,
+	}
+}
+
+func (g *StrictLayout) Margin() int {
+	return g.margin
+}
+
+func (g *StrictLayout) SetMargin(m int) {
+	g.margin = m
+}
+
+func (g *StrictLayout) Spacing() int {
+	return g.spacing
+}
+
+func (g *StrictLayout) SetSpacing(s int) {
+	g.spacing = s
+}
+
+func (g *StrictLayout) GroupIndent() int {
+	return g.groupIndent
+}
+
+func (g *StrictLayout) SetGroupIndent(m int) {
+	g.groupIndent = m
+}
+
+func (g *StrictLayout) GroupSpacing() int {
+	return g.groupSpacing
+}
+
+func (g *StrictLayout) SetGroupSpacing(s int) {
+	g.groupSpacing = s
+}
+
+func (g *StrictLayout) OnPerformLayout(widget Widget, ctx *nanovgo.Context) {
+	height := g.margin
+	availableWidth := -g.margin * 2
+	availableWidth += toI(widget.FixedWidth() > 0, widget.FixedWidth(), widget.Width())
+	window, ok := widget.(*Window)
+	if ok && window.Title() != "" {
+		height += widget.Theme().WindowHeaderHeight - g.margin/2
+	}
+	first := true
+	indent := false
+
+	for _, child := range widget.Children() {
+		if !child.Visible() {
+			continue
+		}
+		label, ok := child.(*Label)
+		if !first {
+			height += toI(ok, g.groupSpacing, g.spacing)
+		}
+		first = false
+		var indentValue int
+
+		if indent && !ok {
+			indentValue = g.groupIndent
+		}
+
+		pW := availableWidth - indentValue
+		_, pH := child.PreferredSize(child, ctx)
+		fW, fH := child.FixedSize()
+		tW := toI(fW > 0, fW, pW)
+		tH := toI(fH > 0, fH, pH)
+		child.SetPosition(g.margin+indentValue, height)
+		child.SetSize(tW, tH)
+		child.OnPerformLayout(child, ctx)
+		height += tH
+
+		if ok {
+			indent = label.Caption() != ""
+		}
+	}
+}
+
+func (g *StrictLayout) PreferredSize(widget Widget, ctx *nanovgo.Context) (int, int) {
+	height := g.margin
+	//height = 0
+	width := g.margin * 2
+
+	window, ok := widget.(*Window)
+	if ok && window.Title() != "" {
+		height += widget.Theme().WindowHeaderHeight - g.margin/2
+	}
+	/*
+		for _, child := range widget.Children() {
+			if !child.Visible() {
+				continue
+			}
+			//label, ok := child.(*Label)
+
+			//pW, pH := child.PreferredSize(child, ctx)
+			_, pH := child.PreferredSize(child, ctx)
+			//fW, fH := child.FixedSize()
+			_, fH := child.FixedSize()
+			//tW := toI(fW > 0, fW, pW)
+			tH := toI(fH > 0, fH, pH)
+			//var indentValue int
+			//if indent && !ok {
+			//	indentValue = g.groupIndent
+			//}
+
+			height += tH
+			//width = maxI(width, tW+2*g.margin+indentValue)
+
+			if ok {
+				//indent = label.Caption() != ""
+			}
+			fmt.Printf("%v: %v\n", child.String(), tH)
+		}
+		height += g.margin
+		fmt.Println("Height is", height)
+	*/
+	return width, height
+}
+
+func (g *StrictLayout) String() string {
+	return "StrictLayout"
 }
