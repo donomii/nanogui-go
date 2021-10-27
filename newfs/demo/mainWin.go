@@ -2,11 +2,12 @@ package demo
 
 import (
 	"encoding/json"
-	"os"
-	"github.com/donomii/goof"
 	"io/ioutil"
-	"github.com/emersion/go-autostart"
+	"os"
+
 	nanogui "../.."
+	"github.com/donomii/goof"
+	"github.com/emersion/go-autostart"
 )
 
 func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
@@ -15,14 +16,8 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 	window.SetPosition(545, 15)
 	window.SetLayout(nanogui.NewGroupLayout())
 
-	b8 := nanogui.NewButton(window, "3D Window")
-	b8.SetCallback(func() {
-		ThreeDeeWin(app, screen)
-		screen.PerformLayout()
-	})
-
 	b9 := nanogui.NewButton(window, "Run at Startup")
-	ExePath,_:=os.Executable()
+	ExePath, _ := os.Executable()
 	b9.SetCallback(func() {
 		app := &autostart.App{
 			Name:        "NewFS",
@@ -51,8 +46,6 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 		screen.PerformLayout()
 	})
 
-
-
 	b5 := nanogui.NewButton(window, "Save")
 	b5.SetCallback(func() {
 		out, _ := json.MarshalIndent(ActorList, "", "	")
@@ -70,10 +63,7 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 		json.Unmarshal(datafile, &app.Globals)
 		for _, set := range tmpList {
 			switch set.WinType {
-			case "ViewWin":
-				win := ViewWin(screen, set.Serial)
-				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
-				screen.PerformLayout()
+
 			case "File Share":
 				win := PClientWin(app, screen)
 				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
@@ -81,11 +71,6 @@ func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 				screen.PerformLayout()
 			case "Run at Startup":
 				goof.WriteMacAgentStart("com.praeceptamachinae.vort.app")
-			case "ThreeDeeWin":
-				win := ThreeDeeWin(app, screen)
-				win.SetFixedSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
-				win.SetSize(set.Window.WidgetWidth, set.Window.WidgetHeight)
-				screen.PerformLayout()
 			}
 		}
 		json.Unmarshal(file, &ActorList)
