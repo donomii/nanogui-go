@@ -3,10 +3,6 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"path"
-
 	demo "./demo"
 
 	//"github.com/donomii/nanogui-go"
@@ -16,7 +12,6 @@ import (
 	_ "embed"
 
 	nanogui ".."
-	"github.com/shibukawa/nanovgo"
 )
 
 //go:embed "font/GenShinGothic-P-Regular.ttf"
@@ -55,31 +50,4 @@ func main() {
 	app.Screen.DrawAll()
 	app.Screen.SetVisible(true)
 	nanogui.MainLoop(app)
-}
-
-func loadImageDirectory(ctx *nanovgo.Context, dir string) []nanogui.Image {
-	var images []nanogui.Image
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		panic(fmt.Sprintf("loadImageDirectory: read error %v\n", err))
-	}
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-		ext := path.Ext(file.Name())
-		if ext != ".png" {
-			continue
-		}
-		fullPath := path.Join(dir, file.Name())
-		img := ctx.CreateImage(fullPath, 0)
-		if img == 0 {
-			panic("Could not open image data!")
-		}
-		images = append(images, nanogui.Image{
-			ImageID: img,
-			Name:    fullPath[:len(fullPath)-4],
-		})
-	}
-	return images
 }

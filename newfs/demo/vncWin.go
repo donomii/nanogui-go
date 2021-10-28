@@ -1,25 +1,23 @@
 package demo
 
 import (
-
 	nanogui "../.."
 
 	"fmt"
-	
-	"github.com/shibukawa/nanovgo"
+
 	"github.com/donomii/goof"
 	"github.com/donomii/hashare"
 	"github.com/kardianos/osext"
+	"github.com/shibukawa/nanovgo"
 
 	"log"
-	
-	"time"
+
+	"io/ioutil"
+	"net/http"
+	"os"
 	"os/exec"
 	"os/user"
-	"os"
-	"io/ioutil"
-"net/http"
-
+	"time"
 )
 
 func NFSAuth(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
@@ -27,48 +25,50 @@ func NFSAuth(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 		[]string{"Server :", "nfs-server", "http://192.168.178.22:8000/"},
 		[]string{"Token :", "nfs-token", "12394348765432782912349283435"},
 		[]string{"Port :", "nfs-port", "8000"},
-	},func()bool{
-		
-		url:=app.GetGlobal("nfs-server")
-		resp, err := http.Get(url+"authenticate")
+	}, func(button *nanogui.Button) bool {
+
+		url := app.GetGlobal("nfs-server")
+		resp, err := http.Get(url + "authenticate")
 		if err != nil {
 			log.Printf("Get")
 			return false
 		}
-		if resp.StatusCode <300 {
+		if resp.StatusCode < 300 {
 			return true
 		}
-		return false},
-		func()bool{
-		
-			url:=app.GetGlobal("nfs-server")
-			resp, err := http.Get(url+"authenticate")
+		return false
+	},
+		func(button *nanogui.Button) bool {
+
+			url := app.GetGlobal("nfs-server")
+			resp, err := http.Get(url + "authenticate")
 			if err != nil {
 				log.Printf("Get failed %v", err)
 				return false
 			}
-			if resp.StatusCode >299 {
+			if resp.StatusCode > 299 {
 				log.Printf("Get failed with code %v", resp.StatusCode)
 				return false
 			}
-			mountUrl(url)
-		return false
+			go mountUrl(url, button)
+			return true
 		},
 	)
 }
 
-func TestGet(url string)bool{
-	resp, err := http.Get(url+"authenticate")
+func TestGet(url string) bool {
+	resp, err := http.Get(url + "authenticate")
 	if err != nil {
 		log.Printf("Get failed:")
 		log.Println(err)
 		return false
 	}
-	if resp.StatusCode <300 {
+	if resp.StatusCode < 300 {
 		return true
 	}
 	log.Println(resp)
-	return false}
+	return false
+}
 
 func AccountWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 
@@ -80,7 +80,6 @@ func AccountWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 
 	WindowList = append(WindowList, window)
 
-	
 	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
 	nextWindowId += 1
 
@@ -90,33 +89,28 @@ func AccountWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 	layout.SetColSpacing(10)
 	window.SetLayout(layout)
 
-	
-		field(window, app, []string{"Account URL :", "earthtide-account", "https://entirety.praeceptamachinae.com/"})
-	
+	field(window, app, []string{"Account URL :", "earthtide-account", "https://entirety.praeceptamachinae.com/"})
 
 	b4 := nanogui.NewButton(window, "Connect")
 	b4.SetCallback(func() {
-		if TestGet(app.GetGlobal("earthtide-account")){
+		if TestGet(app.GetGlobal("earthtide-account")) {
 			b4.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
 		} else {
 			b4.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
-		 }
+		}
 	})
 
-	
 	b5 := nanogui.NewButton(window, "Menu")
 	b5.SetCallback(func() {
 		ControlPanel(app, screen)
-		screen.PerformLayout()	
+		screen.PerformLayout()
 
 	})
 	return window
 }
 
-
-
 func NFSLocalRepoWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
-	
+
 	window := nanogui.NewWindow(screen, "Connect Localnet Repository")
 
 	if WindowList == nil {
@@ -137,26 +131,18 @@ func NFSLocalRepoWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.
 	layout.SetColSpacing(10)
 	window.SetLayout(layout)
 
-
 	b5 := nanogui.NewButton(window, "Connect Local")
 	b5.SetCallback(func() {
 		b5.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
-		if mountLocal(false,false){
+		if mountLocal(false, false, b5) {
 			b5.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
 		} else {
 			b5.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
-		 }
+		}
 	})
-		
+
 	return window
 }
-
-
-
-
-
-
-
 
 var repoDir string
 var controlDir string
@@ -179,7 +165,7 @@ func loadRepoDetails(path string) hashare.ClientConfig {
 	return out
 }
 
-func mountUrl(url string) {
+func mountUrl(url string, button *nanogui.Button) {
 	log.Println("Starting ", url)
 	exePath := "vort-fuse.exe"
 	if !goof.Exists(exePath) {
@@ -192,15 +178,21 @@ func mountUrl(url string) {
 	}
 	cmd := []string{}
 	MountPoint := nextDrive()
-		cmd = []string{exePath, "--url", url, "--mount", MountPoint}
+	cmd = []string{exePath, "--url", url, "--mount", MountPoint}
 
 	go func() {
 		time.Sleep(5 * time.Second)
 		//TODO have vort-fuse write a connected status then pop the window asap
 		goof.QC([]string{`explorer`, MountPoint + "\\"})
+		/* This always returns an error, NFI
+		if err != nil {
+			button.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
+		}*/
 	}()
-	goof.QCI(cmd)
-
+	err := goof.QCI(cmd)
+	if err != nil {
+		button.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
+	}
 }
 
 func mountRepo(config string, debug, trace bool) {
@@ -249,9 +241,7 @@ func mountRepo(config string, debug, trace bool) {
 
 }
 
-
-
-func mountLocal( debug, trace bool)bool {
+func mountLocal(debug, trace bool, button *nanogui.Button) bool {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("Unable to mount local share because %v", r)
@@ -269,12 +259,15 @@ func mountLocal( debug, trace bool)bool {
 	}
 
 	cmd := []string{exePath}
-	goof.QCI(cmd)
+	err := goof.QCI(cmd)
 	time.Sleep(1 * time.Second)
-return false
+	if err != nil {
+		button.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
+		return false
+	}
+	return true
 
 }
-
 
 var nextDriveId = 0
 
@@ -300,10 +293,6 @@ func mountAllRepositories(debug, trace bool) {
 	}
 
 }
-
-
-
-
 
 func PClientWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 
@@ -336,15 +325,11 @@ func PClientWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 	nextWindowId += 1
 	window.SetPosition(0, 0)
 
-
-
-
 	window.SetLayout(nanogui.NewGroupLayout())
 
 	b3 := nanogui.NewButton(window, "Stop All")
 
-	statuses:= []*nanogui.Label{}
-
+	statuses := []*nanogui.Label{}
 
 	repositories := loadUserConfig()
 	for _, k := range repositories {
@@ -354,25 +339,23 @@ func PClientWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 		//node := vv.SubNodes[i]
 		repoDetail := loadRepoDetails(file)
 		name := repoDetail.DisplayName
-	
 
-	st:=nanogui.NewLabel(window, "Status:")
-	st.SetFont("sans-bold")
-	statuses=append(statuses, st)
-	status:= nanogui.NewLabel(window, "Disconnected")//.SetFont("sans-bold")
-	b2 := nanogui.NewButton(window, "Start "+name)
-	b2.SetBackgroundColor(nanovgo.RGBA(0, 0, 255, 25))
-	b2.SetIcon(nanogui.IconRocket)
-	repoPath:= file
-	b2.SetCallback(func() {
-		fmt.Println("pushed!")
-		status.SetCaption("Connected")
-		os.Remove(controlDir + "shutdown")
+		st := nanogui.NewLabel(window, "Status:")
+		st.SetFont("sans-bold")
+		statuses = append(statuses, st)
+		status := nanogui.NewLabel(window, "Disconnected") //.SetFont("sans-bold")
+		b2 := nanogui.NewButton(window, "Start "+name)
+		b2.SetBackgroundColor(nanovgo.RGBA(0, 0, 255, 25))
+		b2.SetIcon(nanogui.IconRocket)
+		repoPath := file
+		b2.SetCallback(func() {
+			fmt.Println("pushed!")
+			status.SetCaption("Connected")
+			os.Remove(controlDir + "shutdown")
 
-					go mountRepo(repoPath, true, false)
-		
-	})
+			go mountRepo(repoPath, true, false)
 
+		})
 
 	}
 
@@ -381,14 +364,12 @@ func PClientWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 	b3.SetCallback(func() {
 		//status.SetCaption("Disconnected")
 		ioutil.WriteFile(controlDir+"shutdown", []byte(" "), 0600)
-		for _,s := range statuses{
+		for _, s := range statuses {
 			s.SetCaption("Disconnected")
 		}
 	})
 
-
 	nanogui.NewResize(window, window)
-
 
 	return window
 

@@ -2,8 +2,9 @@ package demo
 
 import (
 	"fmt"
-	"github.com/shibukawa/nanovgo"
+
 	nanogui "../.."
+	"github.com/shibukawa/nanovgo"
 )
 
 func field(window *nanogui.Window, app *nanogui.Application, data []string) {
@@ -24,8 +25,8 @@ func field(window *nanogui.Window, app *nanogui.Application, data []string) {
 
 }
 
-
-func AuthWin(app *nanogui.Application, screen *nanogui.Screen, title, tipe string, fields [][]string, testFunc func()bool,connectFunc func()bool) *nanogui.Window {
+func AuthWin(app *nanogui.Application, screen *nanogui.Screen, title, tipe string, fields [][]string,
+	testFunc func(*nanogui.Button) bool, connectFunc func(*nanogui.Button) bool) *nanogui.Window {
 
 	window := nanogui.NewWindow(screen, title)
 
@@ -53,25 +54,21 @@ func AuthWin(app *nanogui.Application, screen *nanogui.Screen, title, tipe strin
 
 	b4 := nanogui.NewButton(window, "Test Connection")
 	b4.SetCallback(func() {
-		if testFunc(){
+		if testFunc(b4) {
 			b4.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
 		} else {
 			b4.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
-		 }
+		}
 	})
 
-	
 	b5 := nanogui.NewButton(window, "Connect")
 	b5.SetCallback(func() {
 		b5.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
-		if connectFunc(){
+		if connectFunc(b5) {
 			b5.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
 		} else {
 			b5.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
-		 }
+		}
 	})
 	return window
 }
-
-
-
