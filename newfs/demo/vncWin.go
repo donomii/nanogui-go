@@ -27,7 +27,7 @@ func NFSAuth(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 		[]string{"Port :", "nfs-port", "8000"},
 	}, func(button *nanogui.Button) bool {
 
-		url := app.GetGlobal("nfs-server")
+		url := app.GetGlobal("nfs-server") //FIXME:  Build from server+port
 		resp, err := http.Get(url + "authenticate")
 		if err != nil {
 			log.Printf("Get")
