@@ -1,3 +1,4 @@
+//go:build !js
 // +build !js
 
 package main
@@ -27,6 +28,12 @@ func myinit(a *nanogui.Application) {
 	a.Screen.NVGContext().CreateFontFromMemory("japanese", defaultFont, fd)
 
 	demo.AccountWin(app, a.Screen)
+
+	demo.NFSAuth(app, a.Screen)
+
+	demo.PClientWin(app, a.Screen)
+
+	demo.NFSLocalRepoWin(app, a.Screen)
 
 	a.Screen.PerformLayout()
 	a.Screen.DebugPrint()

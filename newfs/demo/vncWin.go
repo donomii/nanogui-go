@@ -111,7 +111,7 @@ func AccountWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 
 func NFSLocalRepoWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 
-	window := nanogui.NewWindow(screen, "Connect Localnet Repository")
+	window := nanogui.NewWindow(screen, "Scan Local Network")
 
 	if WindowList == nil {
 		WindowList = []*nanogui.Window{}
@@ -125,13 +125,15 @@ func NFSLocalRepoWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.
 	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
 	nextWindowId += 1
 
-	window.SetPosition(445, 358)
+	window.SetPosition(4, 4)
+	window.SetWidth(271)
+	window.SetFixedWidth(271)
 	layout := nanogui.NewGridLayout(nanogui.Horizontal, 2, nanogui.Middle, 15, 5)
 	layout.SetColAlignment(nanogui.Maximum, nanogui.Fill)
 	layout.SetColSpacing(10)
 	window.SetLayout(layout)
 
-	b5 := nanogui.NewButton(window, "Connect Local")
+	b5 := nanogui.NewButton(window, "Scan and Connect")
 	b5.SetCallback(func() {
 		b5.SetBackgroundColor(nanovgo.RGBA(0, 255, 0, 255))
 		if mountLocal(false, false, b5) {
@@ -323,7 +325,7 @@ func PClientWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 
 	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
 	nextWindowId += 1
-	window.SetPosition(0, 0)
+	window.SetPosition(279, 4)
 
 	window.SetLayout(nanogui.NewGroupLayout())
 

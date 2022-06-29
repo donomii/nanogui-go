@@ -13,7 +13,7 @@ import (
 func ControlPanel(app *nanogui.Application, screen *nanogui.Screen) {
 	window := nanogui.NewWindow(screen, "INFS")
 
-	window.SetPosition(545, 15)
+	window.SetPosition(445, 5)
 	window.SetLayout(nanogui.NewGroupLayout())
 
 	b9 := nanogui.NewButton(window, "Run at Startup")

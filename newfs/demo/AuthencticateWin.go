@@ -42,7 +42,7 @@ func AuthWin(app *nanogui.Application, screen *nanogui.Screen, title, tipe strin
 	window.WidgetId = fmt.Sprintf("%v", nextWindowId)
 	nextWindowId += 1
 
-	window.SetPosition(445, 358)
+	window.SetPosition(4, 91)
 	layout := nanogui.NewGridLayout(nanogui.Horizontal, 2, nanogui.Middle, 15, 5)
 	layout.SetColAlignment(nanogui.Maximum, nanogui.Fill)
 	layout.SetColSpacing(10)
