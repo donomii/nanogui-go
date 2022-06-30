@@ -4,11 +4,11 @@ import (
 	nanogui "../.."
 
 	"fmt"
-
 	"github.com/donomii/goof"
 	"github.com/donomii/hashare"
 	"github.com/kardianos/osext"
 	"github.com/shibukawa/nanovgo"
+	"runtime"
 
 	"log"
 
@@ -22,7 +22,7 @@ import (
 
 func NFSAuth(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Window {
 	return AuthWin(app, screen, "Login to NFS", "NFSAuth", [][]string{
-		[]string{"Server :", "nfs-server", "http://192.168.178.22:8000/"},
+		[]string{"Server :", "nfs-server", "http://192.168.0.10:8000/"},
 		[]string{"Token :", "nfs-token", "12394348765432782912349283435"},
 		[]string{"Port :", "nfs-port", "8000"},
 	}, func(button *nanogui.Button) bool {
@@ -170,22 +170,29 @@ func loadRepoDetails(path string) hashare.ClientConfig {
 func mountUrl(url string, button *nanogui.Button) {
 	log.Println("Starting ", url)
 	exePath := "vort-fuse.exe"
+	if runtime.GOOS != "windows" {
+		exePath = "./vort-fuse.exe"
+	}
 	if !goof.Exists(exePath) {
 		var err error
-		exePath, err = exec.LookPath("vort-fuse")
+		exePath, err = exec.LookPath(exePath)
 		if err != nil {
 			dir, _ := osext.ExecutableFolder()
-			exePath = dir + "/vort-fuse"
+			exePath = dir + "/" + exePath
 		}
 	}
+
 	cmd := []string{}
 	MountPoint := nextDrive()
 	cmd = []string{exePath, "--url", url, "--mount", MountPoint}
-
+	log.Println("Using vort at", exePath, "for mounting", MountPoint)
+	log.Printf("%v", cmd)
 	go func() {
 		time.Sleep(5 * time.Second)
 		//TODO have vort-fuse write a connected status then pop the window asap
 		goof.QC([]string{`explorer`, MountPoint + "\\"})
+		goof.QC([]string{`/usr/bin/open`, MountPoint})
+
 		/* This always returns an error, NFI
 		if err != nil {
 			button.SetBackgroundColor(nanovgo.RGBA(255, 0, 0, 255))
@@ -205,12 +212,15 @@ func mountRepo(config string, debug, trace bool) {
 	}()
 	log.Println("Starting ", debug)
 	exePath := "vort-fuse.exe"
+	if runtime.GOOS != "windows" {
+		exePath = "./vort-fuse.exe"
+	}
 	if !goof.Exists(exePath) {
 		var err error
-		exePath, err = exec.LookPath("vort-fuse")
+		exePath, err = exec.LookPath(exePath)
 		if err != nil {
 			dir, _ := osext.ExecutableFolder()
-			exePath = dir + "/vort-fuse"
+			exePath = dir + "/" + exePath
 		}
 	}
 	cmd := []string{}
@@ -237,6 +247,7 @@ func mountRepo(config string, debug, trace bool) {
 		time.Sleep(5 * time.Second)
 		//TODO have vort-fuse write a connected status then pop the window asap
 		goof.QC([]string{`explorer`, MountPoint + "\\"})
+		goof.QC([]string{`/usr/bin/open`, MountPoint})
 	}()
 	goof.QCI(cmd)
 	time.Sleep(1 * time.Second)
@@ -251,12 +262,15 @@ func mountLocal(debug, trace bool, button *nanogui.Button) bool {
 	}()
 	log.Println("Starting ", debug)
 	exePath := "vort-pclient.exe"
+	if runtime.GOOS != "windows" {
+		exePath = "./vort-pclient.exe"
+	}
 	if !goof.Exists(exePath) {
 		var err error
-		exePath, err = exec.LookPath("vort-pclient.exe")
+		exePath, err = exec.LookPath(exePath)
 		if err != nil {
 			dir, _ := osext.ExecutableFolder()
-			exePath = dir + "/vort-pclient.exe"
+			exePath = dir + "/" + exePath
 		}
 	}
 
@@ -276,11 +290,20 @@ var nextDriveId = 0
 func nextDrive() string {
 
 	drives := []string{"z:", "y:", "x:", "w:", "v:", "u:", "t:"}
+	if runtime.GOOS != "windows" {
+		drives = []string{"mount1", "mount2", "mount3", "mount4", "mount5", "mount6", "mount7"}
+		for i, _ := range drives {
+			drives[i] = goof.HomeDirectory() + "/" + drives[i]
+		}
+	}
 	if nextDriveId+1 > len(drives) {
 		panic(fmt.Sprintf("Ran out of available drive letters, tried %v", nextDriveId))
 	}
 	driveStr := drives[nextDriveId]
 	nextDriveId = nextDriveId + 1
+	if runtime.GOOS != "windows" {
+		os.Mkdir(driveStr, 0777)
+	}
 	return driveStr
 }
 
