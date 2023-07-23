@@ -184,7 +184,7 @@ func mountUrl(url string, button *nanogui.Button) {
 
 	cmd := []string{}
 	MountPoint := nextDrive()
-	cmd = []string{exePath, "--url", url, "--mount", MountPoint}
+	cmd = []string{exePath, "--url", url, "--mount", MountPoint, "--debug"}
 	log.Println("Using vort at", exePath, "for mounting", MountPoint)
 	log.Printf("%v", cmd)
 	go func() {
@@ -378,7 +378,7 @@ func PClientWin(app *nanogui.Application, screen *nanogui.Screen) *nanogui.Windo
 			status.SetCaption("Connected")
 			os.Remove(controlDir + "shutdown")
 
-			go mountRepo(repoPath, true, false)
+			go mountRepo(repoPath, true, true)
 
 		})
 
